@@ -1,0 +1,243 @@
+:root {
+    --primary-purple: #8B5A96;
+    --dark-purple: rgb(98, 53, 123);
+    --light-purple: rgb(240, 214, 255);
+    --grey-purple: rgb(155, 125, 166);
+}
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: 'Poppins', sans-serif;
+    background-color: #f8f9fa;
+}
+
+/* Header */
+.header {
+    background: var(--primary-purple);
+    color: white;
+    padding: 1rem 0;
+}
+
+.contact-navbar {
+    background: transparent !important;
+}
+
+.navbar-brand {
+    font-family: 'Magnolia Script', cursive;
+    font-size: 2rem;
+    font-weight: bold;
+}
+
+.navbar-nav .nav-link {
+    color: white !important;
+    font-weight: 500;
+    margin: 0 1rem;
+    transition: color 0.3s;
+}
+
+.navbar-nav .nav-link:hover {
+    color: var(--light-purple) !important;
+}
+
+.cart-icon {
+    background: white;
+    color: var(--primary-purple);
+    border-radius: 50%;
+    width: 40px;
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-decoration: none;
+}
+
+/* Hero Section */
+.hero-section {
+    background: var(--primary-purple);
+    color: white;
+    padding: 4rem 0;
+    text-align: center;
+}
+
+.hero-section h1 {
+    font-family: 'Magnolia Script', cursive;
+    font-size: 4rem;
+    margin-bottom: 1rem;
+}
+
+.hero-section p {
+    font-size: 1.2rem;
+    opacity: 0.9;
+}
+
+/* Contact Info Cards */
+.contact-info {
+    padding: 4rem 0;
+    background: white;
+}
+
+.contact-card {
+    text-align: center;
+    padding: 2rem;
+    border-radius: 15px;
+    background: white;
+    box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+    margin-bottom: 2rem;
+    transition: transform 0.3s;
+}
+
+.contact-card:hover {
+    transform: translateY(-5px);
+}
+
+.contact-icon {
+    width: 60px;
+    height: 60px;
+    background: var(--light-purple);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto 1rem;
+    color: var(--primary-purple);
+    font-size: 1.5rem;
+}
+
+.contact-card h4 {
+    color: var(--dark-purple);
+    margin-bottom: 0.5rem;
+    font-weight: 600;
+}
+
+.contact-card p {
+    color: #666;
+    margin: 0;
+}
+
+/* Contact Form */
+.contact-form-section {
+    padding: 4rem 0;
+    background: #f8f9fa;
+}
+
+.contact-form-section h2 {
+    font-family: 'Magnolia Script', cursive;
+    font-size: 3rem;
+    text-align: center;
+    margin-bottom: 3rem;
+    color: var(--dark-purple);
+}
+
+.form-control {
+    border: 2px solid #e9ecef;
+    border-radius: 10px;
+    padding: 0.75rem 1rem;
+    font-size: 1rem;
+    transition: border-color 0.3s;
+}
+
+.form-control:focus {
+    border-color: var(--primary-purple);
+    box-shadow: 0 0 0 0.2rem rgba(139, 90, 150, 0.25);
+}
+
+.btn-submit {
+    background: var(--primary-purple);
+    color: white;
+    border: none;
+    border-radius: 25px;
+    padding: 0.75rem 2rem;
+    font-size: 1.1rem;
+    font-weight: 500;
+    width: 100%;
+    transition: background-color 0.3s;
+}
+
+.btn-submit:hover {
+    background: var(--dark-purple);
+    color: white;
+}
+
+/* Map Section */
+.map-section {
+    padding: 4rem 0;
+    background: white;
+    text-align: center;
+}
+
+.map-placeholder {
+    background: #e9ecef;
+    border-radius: 15px;
+    height: 300px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #6c757d;
+    font-size: 1.2rem;
+}
+
+/* Footer */
+.footer {
+    background: var(--dark-purple);
+    color: white;
+    padding: 3rem 0 1rem;
+}
+
+.footer h5 {
+    font-family: 'Magnolia Script', cursive;
+    font-size: 1.8rem;
+    margin-bottom: 1rem;
+}
+
+.footer p, .footer a {
+    color: rgba(255,255,255,0.8);
+    text-decoration: none;
+}
+
+.footer a:hover {
+    color: white;
+}
+
+.social-icons a {
+    display: inline-block;
+    width: 40px;
+    height: 40px;
+    background: rgba(255,255,255,0.1);
+    border-radius: 50%;
+    text-align: center;
+    line-height: 40px;
+    margin-right: 10px;
+    transition: background-color 0.3s;
+}
+
+.social-icons a:hover {
+    background: rgba(255,255,255,0.2);
+}
+
+.footer-bottom {
+    border-top: 1px solid rgba(255,255,255,0.1);
+    margin-top: 2rem;
+    padding-top: 2rem;
+    text-align: center;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .hero-section h1 {
+        font-size: 2.5rem;
+    }
+
+    .contact-form-section h2 {
+        font-size: 2rem;
+    }
+
+    .navbar-brand {
+        font-size: 1.5rem;
+    }
+}
+

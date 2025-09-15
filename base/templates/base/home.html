@@ -1,0 +1,205 @@
+{% extends "main.html" %}
+{% load static %}
+<head>
+    <title>{%  block title %}Home{% endblock %}{{ site_settings.site_name }}</title>
+</head>
+{% block content %}
+<div class="pos-f-t">
+      <div class="collapse" id="navbarToggleExternalContent">
+        <div class="p-4 bg-custom-collapsed">
+            <p class="mobile-nav-one">
+                <a href="{% url 'home' %}" style="color: inherit; text-decoration: none;">Home</a>
+            </p>
+            <p class="mobile-nav-two">
+              <a href="{% url 'cart' %}" style="color: inherit; text-decoration: none;">My cart</a>
+            </p>
+        </div>
+      </div>
+      <nav class="navbar navbar-dark navbar-custom">
+        <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarToggleExternalContent" aria-controls="navbarToggleExternalContent" aria-expanded="false" aria-label="Toggle navigation">
+          <span class="navbar-toggler-icon"></span>
+        </button>
+      </nav>
+    </div>
+    <body>
+        <div class="main-container">
+            <section class="hero">
+                <nav class="laptop-navbar">
+                    <p class="nav-home">
+                        <a href="{% url 'home' %}" style="color: inherit; text-decoration: none;">Home</a>
+                    </p>
+                    <p class="nav-cart">
+                      <span class="nav-my">My</span>
+                      <span class="nav-cart-text">
+                          <a href="{% url 'cart' %}" style="color: inherit; text-decoration: none;">cart</a>
+                      </span>
+                    </p>
+                </nav>
+          <!-- TEXT CONTENT -->
+          <div class="hero-content">
+              <h1 class="headline">{{ site_settings.hero_headline|default:"Pastries baked with love" }}</h1>
+              <p class="sub-headline">{{ site_settings.hero_subheadline|default:"The one-stop shop for all your bakery needs" }}</p>
+              <div class="hero-buttons">
+                  <button class="order-hero-button" onclick="location.href='{% url 'products' %}'">Order now</button>
+                  <button class="contact-hero-button" onclick="location.href='{% url 'contact' %}'">Contact us</button>
+              </div>
+          </div>
+
+          <!-- VISUALS (CAKE + CIRCLES) -->
+          <div class="hero-visuals">
+              <div class="circle-nav">
+                  <div class="circle small-circle"></div>
+                </div>
+                  <div class="circle big-circle"></div>
+              {% if site_settings.hero_image_url %}
+                  <img src="{{ site_settings.hero_image_url }}" alt="Hero Cake" class="cake-img">
+              {% else %}
+                  <img src="{% static 'images/header cake.png' %}" alt="Cake" class="cake-img">
+              {% endif %}
+          </div>
+        </section>
+            <section class="best-sellers-section">
+                <h2 class="best-sellers-header">Best Sellers</h2>
+                <div class="card-grid">
+                    {% for product in best_sellers %}
+                    <div class="card">
+                        {% if product.image_url %}
+                            <img src="{{ product.image_url }}" alt="{{ product.name }}">
+                        {% else %}
+                            <img src="{% static 'images/default-product.jpg' %}" alt="{{ product.name }}">
+                        {% endif %}
+                        <h3>{{ product.name }}</h3>
+                        <p>{{ product.formatted_price }}</p>
+                        <button class="best-seller-button" onclick="location.href='{% url 'product_detail' product.pk %}'">
+                            Order now
+                        </button>
+                    </div>
+                    {% empty %}
+                    <!-- Fallback products if no best sellers are set -->
+                    <div class="card">
+                        <img src="{% static 'images/red-velvet.jpg' %}" alt="Red Velvet">
+                        <h3>Red Velvet</h3>
+                        <p>KES 3,500</p>
+                        <button class="best-seller-button">
+                            Order now
+                        </button>
+                    </div>
+                    <div class="card">
+                        <img src="{% static 'images/black-forest.jpg' %}" alt="Black Forest">
+                        <h3>Black Forest</h3>
+                        <p>KES 3,800</p>
+                        <button class="best-seller-button">
+                            Order now
+                        </button>
+                    </div>
+                    <div class="card">
+                        <img src="{% static 'images/chocolate-cake.jpg' %}" alt="Chocolate Cake">
+                        <h3>Chocolate Cake</h3>
+                        <p>KES 4,500</p>
+                        <button class="best-seller-button">
+                            Order now
+                        </button>
+                    </div>
+                    {% endfor %}
+                </div>
+            </section>
+            <div class="spacer layer1" style="background-image: url('{% static 'images/layered-waves-haikei (11).svg' %}');"></div>
+            <section class="about-section">
+                <p class="about-us-header">
+                    {{ site_settings.about_title|default:"About us" }}
+                </p>
+                <div class="info-container">
+                    {% if site_settings.owner_image_url %}
+                        <img src="{{ site_settings.owner_image_url }}" alt="Owner">
+                    {% else %}
+                        <img src="{% static 'images/owner-image.jpg' %}" alt="Owner">
+                    {% endif %}
+                    <div class="owner-info">
+                        <p>
+                            {{ site_settings.about_description|default:"Lorem Ipsum is simply dummy text of the printing and typesetting industry. Lorem Ipsum has been the industry's standard dummy text ever since the 1500s, when an unknown printer took a galley of type and scrambled it to make a type specimen book. It has survived not only five centuries, but also the leap into electronic typesetting, remaining essentially unchanged." }}
+                        </p>
+                    </div>
+                </div>
+            </section>
+            <div class="spacer layer2" style="background-image: url('{% static 'images/wave-haikei (3).svg' %}');"></div>
+            <section class="categories">
+                <h2>Categories</h2>
+                    <div class="card-grid">
+                        {% for category in featured_categories %}
+                        <div class="card category-card" onclick="location.href='{% url 'category_products' category.pk %}'">
+                            {% if category.image_url %}
+                                <img src="{{ category.image_url }}" alt="{{ category.name }}">
+                            {% else %}
+                                <!-- Fallback images based on category type -->
+                                {% if category.category_type == 'wedding' %}
+                                    <img src="{% static 'images/wedding-cake-5071370.jpg' %}" alt="{{ category.name }}">
+                                {% elif category.category_type == 'birthday' %}
+                                    <img src="{% static 'images/birthday-cake-7104505.jpg' %}" alt="{{ category.name }}">
+                                {% elif category.category_type == 'anniversary' %}
+                                    <img src="{% static 'images/cake-264224.jpg' %}" alt="{{ category.name }}">
+                                {% else %}
+                                    <img src="{% static 'images/default-category.jpg' %}" alt="{{ category.name }}">
+                                {% endif %}
+                            {% endif %}
+                            <h3>{{ category.name }}</h3>
+                        </div>
+                        {% empty %}
+                        <!-- Fallback categories if none are featured -->
+                        <div class="card category-card">
+                            <img src="{% static 'images/wedding-cake-5071370.jpg' %}" alt="Wedding Cake">
+                            <h3>Wedding Cakes</h3>
+                        </div>
+                        <div class="card category-card">
+                            <img src="{% static 'images/birthday-cake-7104505.jpg' %}" alt="Birthday Cake">
+                            <h3>Birthday Cakes</h3>
+                        </div>
+                        <div class="card category-card">
+                            <img src="{% static 'images/cake-264224.jpg' %}" alt="Anniversary Cake">
+                            <h3>Anniversary Cakes</h3>
+                        </div>
+                        {% endfor %}
+                    </div>
+            </section>
+              <!-- NEWSLETTER -->
+            <section class="newsletter-section" style="background: url('{% static 'images/newsletter-background.jpg' %}') center/cover no-repeat;">
+              <div class="newsletter-overlay">
+                <h2 class="newsletter-title">Join Our Newsletter</h2>
+                <p class="newsletter-subtitle">Get sweet updates, offers & more 🍰</p>
+
+                <form class="newsletter-form" method="post" action="{% url 'newsletter_subscribe' %}">
+                  {% csrf_token %}
+                  <div class="form-row">
+                    <input type="text" name="first_name" placeholder="First Name" required>
+                    <input type="text" name="last_name" placeholder="Last Name" required>
+                  </div>
+                  <div class="form-row">
+                    <input type="email" name="email" placeholder="Your Email" required>
+                    <button type="submit">Subscribe</button>
+                  </div>
+                </form>
+              </div>
+            </section>
+
+        </div>
+
+        <!-- Messages Framework for Django -->
+        {% if messages %}
+            <div class="position-fixed top-0 end-0 p-3" style="z-index: 1050;">
+                {% for message in messages %}
+                    <div class="toast show" role="alert">
+                        <div class="toast-header">
+                            <strong class="me-auto">{{ site_settings.business_name|default:"Sweet Delights" }}</strong>
+                            <button type="button" class="btn-close" data-bs-dismiss="toast"></button>
+                        </div>
+                        <div class="toast-body">
+                            {{ message }}
+                        </div>
+                    </div>
+                {% endfor %}
+            </div>
+        {% endif %}
+    </body>
+{% endblock content %}
+
+
+

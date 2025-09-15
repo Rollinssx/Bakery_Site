@@ -1,0 +1,88 @@
+{% extends "main.html" %}
+{% load static %}
+<head>
+    <title>{%  block title %}My Cart{% endblock %}{{ site_settings.site_name }}</title>
+</head>
+{% block content %}
+
+<body>
+    <header class="cart-header">
+        <div class="cart-container-main cart-navbar">
+            <a href="#" class="cart-logo">Sweet Delights</a>
+            <nav class="cart-nav-links">
+                <a href="#" class="cart-nav-link">Home</a>
+                <a href="#" class="cart-nav-link">Products</a>
+                <a href="#" class="cart-nav-link">Contact</a>
+                <a href="#" class="cart-nav-link">Login</a>
+            </nav>
+        </div>
+    </header>
+
+    <main>
+        <div class="cart-container-main">
+            <h1 class="page-title">Your Shopping Cart</h1>
+
+            <div class="cart-container">
+                <!-- Cart Item 1 -->
+                <div class="cart-item">
+                    <img src="https://via.placeholder.com/100x100.png?text=Chocolate+Cake" alt="Chocolate Cake" class="cart-item-img">
+                    <div class="cart-item-details">
+                        <h4>Chocolate Cake</h4>
+                        <p>Decadent triple chocolate layer cake</p>
+                    </div>
+                    <div class="cart-item-controls">
+                        <button class="quantity-btn">-</button>
+                        <span class="item-quantity">1</span>
+                        <button class="quantity-btn">+</button>
+                    </div>
+                    <span class="cart-item-price">$42.00</span>
+                </div>
+
+                <!-- Cart Item 2 -->
+                <div class="cart-item">
+                    <img src="https://via.placeholder.com/100x100.png?text=Sourdough+Bread" alt="Sourdough Bread" class="cart-item-img">
+                    <div class="cart-item-details">
+                        <h4>Sourdough Bread</h4>
+                        <p>Artisan sourdough with a perfect crust</p>
+                    </div>
+                    <div class="cart-item-controls">
+                        <button class="quantity-btn">-</button>
+                        <span class="item-quantity">2</span>
+                        <button class="quantity-btn">+</button>
+                    </div>
+                    <span class="cart-item-price">$12.00</span>
+                </div>
+            </div>
+
+            <div class="cart-summary">
+                <h4>Order Summary</h4>
+                <div class="summary-row">
+                    <span>Subtotal</span>
+                    <span>$54.00</span>
+                </div>
+                <div class="summary-row">
+                    <span>Shipping</span>
+                    <span>$5.00</span>
+                </div>
+                <div class="summary-total summary-row">
+                    <span>Total</span>
+                    <span>$59.00</span>
+                </div>
+                <a href="checkout.html" class="checkout-btn" role="button">Proceed to Checkout</a>
+            </div>
+
+            <a href="index.html" class="continue-shopping">Continue Shopping</a>
+        </div>
+    </main>
+</body>
+{% endblock %}
+
+
+
+
+
+
+
+
+
+

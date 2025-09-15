@@ -1,0 +1,146 @@
+{% extends "main.html" %}
+{% load static %}
+<head>
+    <title>{% block title %}Our Products{% endblock title %} - {{ site_settings.business_name|default:"Sweet Delights" }}</title>
+    <meta name="description" content="Fresh baked goods made daily with love by {{ site_settings.business_name|default:'Sweet Delights' }}">
+</head>
+{% block content %}
+<body>
+    <header>
+        <div class="products-container products-navbar">
+            <a href="{% url 'home' %}" class="products-logo">{{ site_settings.business_name|default:"Sweet Delights" }}</a>
+            <nav class="products-nav-links">
+                <a href="{% url 'home' %}" class="products-nav-link">Home</a>
+                <a href="{% url 'products' %}" class="products-nav-link">Products</a>
+                <a href="{% url 'contact' %}" class="products-nav-link">Contact</a>
+                <a href="#" class="products-nav-link">Login</a>
+            </nav>
+        </div>
+    </header>
+
+    <!-- Hero Section -->
+    <section class="products-hero-section">
+        <div class="products-container">
+            <h1>Our Delicious Creations</h1>
+            <p>From classic cakes to artisan breads, find your next favorite treat.</p>
+        </div>
+    </section>
+
+    <!-- Search Bar -->
+    <section class="products-search-section">
+        <div class="products-container">
+            <form method="get" class="search-form">
+                <input type="text" name="search" placeholder="Search products..." value="{{ search_query }}" class="search-input">
+                <button type="submit" class="search-btn">Search</button>
+            </form>
+        </div>
+    </section>
+
+    <!-- Filter Tabs -->
+    <section class="products-filter-section">
+        <div class="products-container">
+            <div class="products-filter-tabs">
+                <a href="{% url 'products' %}" class="products-filter-tab {% if current_category == 'all' or not current_category %}active{% endif %}">All</a>
+                {% for category in categories %}
+                <a href="{% url 'products' %}?category={{ category.slug }}"
+                   class="products-filter-tab {% if current_category == category.slug %}active{% endif %} {{ category.slug }}">
+                   {{ category.name }}
+                </a>
+                {% endfor %}
+            </div>
+        </div>
+    </section>
+
+    <!-- Products Grid -->
+    <section class="products-section">
+        <div class="products-container">
+            {% if products %}
+            <div class="products-grid">
+                {% for product in products %}
+                <div class="products-product-card" data-category="{{ product.category.slug }}">
+                    {% if product.image %}
+                    <img src="{{ product.image.url }}" alt="{{ product.name }}" class="products-product-image">
+                    {% else %}
+                    <img src="https://via.placeholder.com/300x200.png?text={{ product.name }}" alt="{{ product.name }}" class="products-product-image">
+                    {% endif %}
+                    <div class="products-product-info">
+                        <h3 class="products-product-title">{{ product.name }}</h3>
+                        <p class="products-product-description">{{ product.description|truncatewords:15 }}</p>
+                        <div class="products-product-footer">
+                            <span class="products-product-price">${{ product.price }}</span>
+                            <span class="products-stock-status {% if not product.is_in_stock %}out-of-stock{% endif %}">
+                                {{ product.stock_status }}
+                            </span>
+                        </div>
+                        {% if product.is_in_stock %}
+                        <button class="products-add-to-cart-btn" onclick="addToCart({{ product.id }})">Add to Cart</button>
+                        {% else %}
+                        <button class="products-add-to-cart-btn" disabled>Out of Stock</button>
+                        {% endif %}
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+            {% else %}
+            <div class="no-products">
+                <p>No products found{% if search_query %} for "{{ search_query }}"{% endif %}.</p>
+                <a href="{% url 'products' %}" class="btn">View All Products</a>
+            </div>
+            {% endif %}
+        </div>
+    </section>
+
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+
+    <script>
+        function addToCart(productId) {
+            fetch(`/cart/add/${productId}/`, {
+                method: 'POST',
+                headers: {
+                    'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value,
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ quantity: 1 })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    alert('Product added to cart!');
+                    // Update cart icon count if you have one
+                    updateCartCount();
+                } else {
+                    alert('Error adding product to cart: ' + (data.message || 'Unknown error'));
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('Error adding product to cart');
+            });
+        }
+
+        function updateCartCount() {
+            fetch('/cart/count/')
+            .then(response => response.json())
+            .then(data => {
+                const cartIcon = document.querySelector('.cart-count');
+                if (cartIcon) {
+                    cartIcon.textContent = data.count;
+                }
+            });
+        }
+
+        // Add CSRF token to all forms
+        document.addEventListener('DOMContentLoaded', function() {
+            const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]');
+            if (!csrfToken) {
+                const token = document.createElement('input');
+                token.type = 'hidden';
+                token.name = 'csrfmiddlewaretoken';
+                token.value = '{{ csrf_token }}';
+                document.body.appendChild(token);
+            }
+        });
+    </script>
+</body>
+{% endblock content %}
