@@ -1,18 +1,18 @@
 {% extends "main.html" %}
 {% load static %}
 <head>
-    <title>{%  block title %}My Cart{% endblock %}{{ site_settings.site_name }}</title>
+    <title>{% block title %}My Cart{% endblock %}{{ site_settings.site_name }}</title>
 </head>
 {% block content %}
 
 <body>
     <header class="cart-header">
         <div class="cart-container-main cart-navbar">
-            <a href="#" class="cart-logo">Sweet Delights</a>
+            <a href="{% url 'home' %}" class="cart-logo">{{ settings.business_name|default:"Sweet Delights" }}</a>
             <nav class="cart-nav-links">
-                <a href="#" class="cart-nav-link">Home</a>
-                <a href="#" class="cart-nav-link">Products</a>
-                <a href="#" class="cart-nav-link">Contact</a>
+                <a href="{% url 'home' %}" class="cart-nav-link">Home</a>
+                <a href="{% url 'products' %}" class="cart-nav-link">Products</a>
+                <a href="{% url 'contact' %}" class="cart-nav-link">Contact</a>
                 <a href="#" class="cart-nav-link">Login</a>
             </nav>
         </div>
@@ -20,63 +20,184 @@
 
     <main>
         <div class="cart-container-main">
+            <!-- Messages Section -->
+            {% if messages %}
+                <div class="messages-container">
+                    {% for message in messages %}
+                        <div class="alert alert-{{ message.tags }}">
+                            <span class="message-text">{{ message }}</span>
+                            <button type="button" class="close-btn" onclick="this.parentElement.remove()">×</button>
+                        </div>
+                    {% endfor %}
+                </div>
+            {% endif %}
+
             <h1 class="page-title">Your Shopping Cart</h1>
 
-            <div class="cart-container">
-                <!-- Cart Item 1 -->
-                <div class="cart-item">
-                    <img src="https://via.placeholder.com/100x100.png?text=Chocolate+Cake" alt="Chocolate Cake" class="cart-item-img">
-                    <div class="cart-item-details">
-                        <h4>Chocolate Cake</h4>
-                        <p>Decadent triple chocolate layer cake</p>
-                    </div>
-                    <div class="cart-item-controls">
-                        <button class="quantity-btn">-</button>
-                        <span class="item-quantity">1</span>
-                        <button class="quantity-btn">+</button>
-                    </div>
-                    <span class="cart-item-price">$42.00</span>
+            {% if cart_items %}
+                <div class="cart-container">
+                    {% for item in cart_items %}
+                        <div class="cart-item" data-product-id="{{ item.product.id }}">
+                            <img src="https://via.placeholder.com/100x100.png?text={{ item.product.name|slice:':3' }}" alt="{{ item.product.name }}" class="cart-item-img">
+                            <div class="cart-item-details">
+                                <h4>{{ item.product.name }}</h4>
+                                <p>{{ item.product.description|truncatewords:10 }}</p>
+                                <small class="item-unit-price">KES {{ item.product.price }} each</small>
+                            </div>
+                            <div class="cart-item-controls">
+                                <button class="quantity-btn" onclick="updateCartQuantity({{ item.product.id }}, {{ item.quantity|add:'-1' }})">-</button>
+                                <span class="item-quantity">{{ item.quantity }}</span>
+                                <button class="quantity-btn" onclick="updateCartQuantity({{ item.product.id }}, {{ item.quantity|add:'1' }})">+</button>
+                            </div>
+                            <span class="cart-item-price">KES {{ item.get_total_price }}</span>
+                            <button class="remove-item-btn" onclick="removeFromCart({{ item.product.id }})" title="Remove item">
+                                ×
+                            </button>
+                        </div>
+                    {% endfor %}
                 </div>
 
-                <!-- Cart Item 2 -->
-                <div class="cart-item">
-                    <img src="https://via.placeholder.com/100x100.png?text=Sourdough+Bread" alt="Sourdough Bread" class="cart-item-img">
-                    <div class="cart-item-details">
-                        <h4>Sourdough Bread</h4>
-                        <p>Artisan sourdough with a perfect crust</p>
+                <div class="cart-summary">
+                    <h4>Order Summary</h4>
+                    <div class="summary-row">
+                        <span>Subtotal</span>
+                        <span id="cart-subtotal">KES {{ cart_total }}</span>
                     </div>
-                    <div class="cart-item-controls">
-                        <button class="quantity-btn">-</button>
-                        <span class="item-quantity">2</span>
-                        <button class="quantity-btn">+</button>
+                    <div class="summary-row">
+                        <span>Delivery</span>
+                        <span>TBD</span>
                     </div>
-                    <span class="cart-item-price">$12.00</span>
+                    <div class="summary-total summary-row">
+                        <span>Total</span>
+                        <span id="cart-total">KES {{ cart_total }}</span>
+                    </div>
+                    <a href="{% url 'checkout' %}" class="checkout-btn" role="button">Proceed to Checkout</a>
                 </div>
-            </div>
 
-            <div class="cart-summary">
-                <h4>Order Summary</h4>
-                <div class="summary-row">
-                    <span>Subtotal</span>
-                    <span>$54.00</span>
+                <a href="{% url 'products' %}" class="continue-shopping">Continue Shopping</a>
+            {% else %}
+                <!-- Empty Cart Message -->
+                <div class="empty-cart-message">
+                    <div class="empty-cart-icon">
+                        <svg xmlns="http://www.w3.org/2000/svg" height="100px" viewBox="0 -960 960 960" width="100px" fill="#000000">
+                            <path d="M280-80q-33 0-56.5-23.5T200-160q0-33 23.5-56.5T280-240q33 0 56.5 23.5T360-160q0 33-23.5 56.5T280-80Zm400 0q-33 0-56.5-23.5T600-160q0-33 23.5-56.5T680-240q33 0 56.5 23.5T760-160q0 33-23.5 56.5T680-80ZM246-720l96 200h280l110-200H246Zm-38-80h590q23 0 35 20.5t1 41.5L692-482q-11 20-29.5 31T622-440H324l-44 80h480v80H280q-45 0-68-39.5t-2-78.5l54-98-144-304H40v-80h130l38 80Zm134 280h280-280Z"/>
+                        </svg>
+                    </div>
+                    <h2>Your cart is empty</h2>
+                    <p>Looks like you haven't added anything to your cart yet.</p>
+                    <p>Browse our delicious products and add some items to get started!</p>
+                    <a href="{% url 'products' %}" class="btn btn-primary">Shop Now</a>
                 </div>
-                <div class="summary-row">
-                    <span>Shipping</span>
-                    <span>$5.00</span>
-                </div>
-                <div class="summary-total summary-row">
-                    <span>Total</span>
-                    <span>$59.00</span>
-                </div>
-                <a href="checkout.html" class="checkout-btn" role="button">Proceed to Checkout</a>
-            </div>
-
-            <a href="index.html" class="continue-shopping">Continue Shopping</a>
+            {% endif %}
         </div>
     </main>
+
+
+    <script>
+        // CSRF token for AJAX requests
+        function getCookie(name) {
+            let cookieValue = null;
+            if (document.cookie && document.cookie !== '') {
+                const cookies = document.cookie.split(';');
+                for (let i = 0; i < cookies.length; i++) {
+                    const cookie = cookies[i].trim();
+                    if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                        cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                        break;
+                    }
+                }
+            }
+            return cookieValue;
+        }
+
+        const csrftoken = getCookie('csrftoken');
+
+        // Update cart quantity
+        async function updateCartQuantity(productId, newQuantity) {
+            if (newQuantity < 1) {
+                removeFromCart(productId);
+                return;
+            }
+
+            const cartItem = document.querySelector(`.cart-item[data-product-id="${productId}"]`);
+            cartItem.classList.add('updating');
+
+            try {
+                const response = await fetch(`/cart/update/${productId}/`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': csrftoken
+                    },
+                    body: JSON.stringify({ quantity: newQuantity })
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    // Update quantity display
+                    cartItem.querySelector('.item-quantity').textContent = newQuantity;
+                    // Update item total price
+                    cartItem.querySelector('.cart-item-price').textContent = `KES ${data.item_total}`;
+                    // Update cart totals
+                    document.getElementById('cart-subtotal').textContent = `KES ${data.cart_total}`;
+                    document.getElementById('cart-total').textContent = `KES ${data.cart_total}`;
+                } else {
+                    alert('Error updating cart: ' + data.error);
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                alert('Error updating cart. Please try again.');
+            } finally {
+                cartItem.classList.remove('updating');
+            }
+        }
+
+        // Remove item from cart
+        async function removeFromCart(productId) {
+            if (!confirm('Are you sure you want to remove this item from your cart?')) {
+                return;
+            }
+
+            const cartItem = document.querySelector(`.cart-item[data-product-id="${productId}"]`);
+            cartItem.classList.add('updating');
+
+            try {
+                const response = await fetch(`/cart/remove/${productId}/`, {
+                    method: 'POST',
+                    headers: {
+                        'X-CSRFToken': csrftoken
+                    }
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    // Remove the item from DOM
+                    cartItem.remove();
+
+                    // Update cart totals
+                    document.getElementById('cart-subtotal').textContent = `KES ${data.cart_total}`;
+                    document.getElementById('cart-total').textContent = `KES ${data.cart_total}`;
+
+                    // Check if cart is now empty
+                    const remainingItems = document.querySelectorAll('.cart-item');
+                    if (remainingItems.length === 0) {
+                        location.reload(); // Reload to show empty cart message
+                    }
+                } else {
+                    alert('Error removing item: ' + data.error);
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                alert('Error removing item. Please try again.');
+            } finally {
+                cartItem.classList.remove('updating');
+            }
+        }
+    </script>
 </body>
 {% endblock %}
-
 
 
 

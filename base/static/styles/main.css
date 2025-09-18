@@ -14,6 +14,78 @@ body {
     font-family: schoolbell;
 }
 
+/* Navigation Dropdown Styles */
+.nav-dropdown-btn {
+    background: transparent !important;
+    border: none !important;
+    color: white !important;
+    font-family: 'Schoolbell', cursive !important;
+    font-size: inherit !important;
+    padding: 0 !important;
+    text-decoration: none !important;
+    box-shadow: none !important;
+}
+
+.nav-dropdown-btn:hover,
+.nav-dropdown-btn:focus,
+.nav-dropdown-btn:active {
+    background: transparent !important;
+    border: none !important;
+    color: var(--light-purple) !important;
+    box-shadow: none !important;
+    outline: none !important;
+}
+
+.nav-dropdown-btn::after {
+    color: white;
+    margin-left: 0.5rem;
+}
+
+.laptop-navbar .dropdown-menu {
+    background: var(--dark-purple);
+    border: 2px solid var(--light-purple);
+    border-radius: 15px;
+    padding: 0.5rem 0;
+    min-width: 200px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+    margin-top: 0.5rem;
+}
+
+.laptop-navbar .dropdown-item {
+    color: white;
+    font-family: 'Poppins', sans-serif;
+    font-size: 1rem;
+    padding: 0.75rem 1.5rem;
+    transition: all 0.3s ease;
+    border: none;
+    background: transparent;
+}
+
+.laptop-navbar .dropdown-item:hover {
+    background: var(--light-purple);
+    color: var(--dark-purple);
+    transform: translateX(5px);
+}
+
+.laptop-navbar .dropdown-divider {
+    border-top: 1px solid var(--light-purple);
+    margin: 0.5rem 0;
+}
+
+/* Make sure dropdown shows on top of other elements */
+.laptop-navbar .btn-group {
+    position: relative;
+    z-index: 1000;
+}
+
+/* Responsive - hide dropdown on mobile since you have mobile nav */
+@media (max-width: 768px) {
+    .laptop-navbar {
+        display: none;
+    }
+}
+
+
 .navbar-custom {
     background-color: var(--dark-purple);
     display: none;
@@ -63,7 +135,6 @@ body {
 }
 
 .nav-my {
-  color: white;
   border-radius: 50%;
   padding: 0.2rem 0.8rem;
   margin-right: 0.3rem;
@@ -523,7 +594,6 @@ body {
     }
 
     .nav-my {
-        color: white;
         border-radius: 50%;
         padding: 0.2rem 0.8rem;
         margin-right: 0.3rem;
@@ -686,7 +756,6 @@ body {
     }
 
     .nav-my {
-        color: white;
         border-radius: 50%;
         padding: 0.2rem 0.8rem;
         margin-right: 0.3rem;

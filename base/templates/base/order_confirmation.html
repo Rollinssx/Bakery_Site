@@ -1,0 +1,104 @@
+{% extends "main.html" %}
+{% load static %}
+{% block content %}
+<head>
+    <title>Order Confirmation - {{ settings.business_name }}</title>
+    <style>
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="confirmation-card">
+            <div class="success-icon">✅</div>
+            <h1 class="confirmation-title">Order Confirmed!</h1>
+            <p>Thank you {{ order.customer_name }}! Your order has been successfully placed.</p>
+
+            <div class="order-number">
+                Order #{{ order.order_number }}
+            </div>
+
+            <div class="order-details">
+                <h3>Order Summary</h3>
+
+                <div class="detail-row">
+                    <span>Customer:</span>
+                    <span>{{ order.customer_name }}</span>
+                </div>
+
+                <div class="detail-row">
+                    <span>Email:</span>
+                    <span>{{ order.customer_email }}</span>
+                </div>
+
+                <div class="detail-row">
+                    <span>Phone:</span>
+                    <span>{{ order.customer_phone }}</span>
+                </div>
+
+                <div class="detail-row">
+                    <span>{% if order.is_delivery %}Delivery{% else %}Pickup{% endif %} Date:</span>
+                    <span>{{ order.delivery_date|date:"F j, Y \a\t g:i A" }}</span>
+                </div>
+
+                {% if order.is_delivery %}
+                <div class="detail-row">
+                    <span>Delivery Address:</span>
+                    <span>{{ order.delivery_address }}</span>
+                </div>
+                {% endif %}
+
+                {% if order.special_instructions %}
+                <div class="detail-row">
+                    <span>Special Instructions:</span>
+                    <span>{{ order.special_instructions }}</span>
+                </div>
+                {% endif %}
+
+                <div class="order-items">
+                    <h4 style="margin-bottom: 1rem; color: var(--dark-purple);">Items Ordered:</h4>
+                    {% for item in order.items.all %}
+                    <div class="order-item">
+                        <div class="item-info">
+                            <div class="item-name">{{ item.product.name }}</div>
+                            <div class="item-quantity">Quantity: {{ item.quantity }}</div>
+                            {% if item.customization_notes %}
+                                <div class="item-quantity">Notes: {{ item.customization_notes }}</div>
+                            {% endif %}
+                        </div>
+                        <div class="item-price">{{ item.formatted_total }}</div>
+                    </div>
+                    {% endfor %}
+                </div>
+
+                <div class="detail-row">
+                    <span><strong>Total Amount:</strong></span>
+                    <span><strong>KES {{ order.total_amount }}</strong></span>
+                </div>
+            </div>
+
+            <div class="next-steps">
+                <h4>What happens next?</h4>
+                <ul>
+                    <li>We will contact you at {{ order.customer_phone }} within 2 hours to confirm your order</li>
+                    <li>Your order will be prepared fresh for your {% if order.is_delivery %}delivery{% else %}pickup{% endif %}</li>
+                    <li>Payment is due upon {% if order.is_delivery %}delivery{% else %}pickup{% endif %}</li>
+                    <li>Please have the exact amount ready (KES {{ order.total_amount }})</li>
+                    {% if not order.is_delivery %}
+                    <li>Pickup location: {{ settings.address }}</li>
+                    {% endif %}
+                </ul>
+            </div>
+
+            <div class="action-buttons">
+                <a href="{% url 'home' %}" class="btn btn-primary">Continue Shopping</a>
+                <a href="{% url 'contact' %}" class="btn btn-outline">Contact Us</a>
+            </div>
+        </div>
+
+        <div style="text-align: center; margin-top: 2rem; color: #6c757d;">
+            <p>Need help? Contact us at {{ settings.phone }} or {{ settings.email }}</p>
+            <p>Store Hours: {{ settings.opening_hours|linebreaks }}</p>
+        </div>
+    </div>
+</body>
+</html>

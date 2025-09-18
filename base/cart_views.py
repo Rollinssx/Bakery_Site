@@ -7,58 +7,170 @@ from django.views.decorators.http import require_POST
 import json
 from .models import Product, CartItem
 
+# cart_views.py - Updated with proper error handling and responses
 
+from django.http import JsonResponse
+from django.shortcuts import get_object_or_404
+from django.contrib.auth.decorators import login_required
+from django.views.decorators.csrf import csrf_exempt
+from django.views.decorators.http import require_POST
+from .models import Product, CartItem
+import json
+
+
+@login_required
 @require_POST
 def add_to_cart(request, product_id):
-    """Add product to cart via AJAX"""
+    """Add product to cart"""
     try:
-        product = get_object_or_404(Product, id=product_id)
+        product = get_object_or_404(Product, id=product_id, is_active=True)
 
-        if not product.is_in_stock:
-            return JsonResponse({'success': False, 'message': 'Product is out of stock'})
+        # Get or create cart item
+        cart_item, created = CartItem.objects.get_or_create(
+            user=request.user,
+            product=product,
+            defaults={'quantity': 1}
+        )
 
-        if request.user.is_authenticated:
-            # For authenticated users, use database
-            cart_item, created = CartItem.objects.get_or_create(
-                user=request.user,
-                product=product,
-                defaults={'quantity': 1}
-            )
+        if not created:
+            cart_item.quantity += 1
+            cart_item.save()
 
-            if not created:
-                if cart_item.quantity < product.stock_quantity:
-                    cart_item.quantity += 1
-                    cart_item.save()
-                else:
-                    return JsonResponse({'success': False, 'message': 'Not enough stock available'})
-
-            cart_count = CartItem.objects.filter(user=request.user).count()
-        else:
-            # For anonymous users, use session
-            cart = request.session.get('cart', {})
-            product_id_str = str(product_id)
-
-            if product_id_str in cart:
-                if cart[product_id_str] < product.stock_quantity:
-                    cart[product_id_str] += 1
-                else:
-                    return JsonResponse({'success': False, 'message': 'Not enough stock available'})
-            else:
-                cart[product_id_str] = 1
-
-            request.session['cart'] = cart
-            cart_count = len(cart)
+        # Calculate cart totals
+        cart_items = CartItem.objects.filter(user=request.user)
+        cart_total = sum(item.get_total_price() for item in cart_items)
+        cart_count = sum(item.quantity for item in cart_items)
 
         return JsonResponse({
             'success': True,
-            'message': 'Product added to cart successfully',
-            'cart_count': cart_count
+            'message': f'{product.name} added to cart',
+            'cart_count': cart_count,
+            'cart_total': float(cart_total),
+            'item_quantity': cart_item.quantity
+        })
+
+    except Product.DoesNotExist:
+        return JsonResponse({
+            'success': False,
+            'error': 'Product not found'
+        }, status=404)
+    except Exception as e:
+        return JsonResponse({
+            'success': False,
+            'error': 'Error adding item to cart'
+        }, status=500)
+
+
+@login_required
+@require_POST
+def update_cart_quantity(request, product_id):
+    """Update cart item quantity"""
+    try:
+        data = json.loads(request.body)
+        new_quantity = int(data.get('quantity', 1))
+
+        if new_quantity < 1:
+            return remove_from_cart(request, product_id)
+
+        cart_item = get_object_or_404(
+            CartItem,
+            user=request.user,
+            product_id=product_id
+        )
+
+        cart_item.quantity = new_quantity
+        cart_item.save()
+
+        # Calculate totals
+        cart_items = CartItem.objects.filter(user=request.user)
+        cart_total = sum(item.get_total_price() for item in cart_items)
+        cart_count = sum(item.quantity for item in cart_items)
+        item_total = cart_item.get_total_price()
+
+        return JsonResponse({
+            'success': True,
+            'cart_count': cart_count,
+            'cart_total': float(cart_total),
+            'item_total': float(item_total),
+            'item_quantity': cart_item.quantity
+        })
+
+    except CartItem.DoesNotExist:
+        return JsonResponse({
+            'success': False,
+            'error': 'Cart item not found'
+        }, status=404)
+    except (ValueError, json.JSONDecodeError):
+        return JsonResponse({
+            'success': False,
+            'error': 'Invalid quantity'
+        }, status=400)
+    except Exception as e:
+        return JsonResponse({
+            'success': False,
+            'error': 'Error updating cart'
+        }, status=500)
+
+
+@login_required
+@require_POST
+def remove_from_cart(request, product_id):
+    """Remove item from cart"""
+    try:
+        cart_item = get_object_or_404(
+            CartItem,
+            user=request.user,
+            product_id=product_id
+        )
+
+        cart_item.delete()
+
+        # Calculate remaining totals
+        cart_items = CartItem.objects.filter(user=request.user)
+        cart_total = sum(item.get_total_price() for item in cart_items)
+        cart_count = sum(item.quantity for item in cart_items)
+
+        return JsonResponse({
+            'success': True,
+            'message': 'Item removed from cart',
+            'cart_count': cart_count,
+            'cart_total': float(cart_total)
+        })
+
+    except CartItem.DoesNotExist:
+        return JsonResponse({
+            'success': False,
+            'error': 'Cart item not found'
+        }, status=404)
+    except Exception as e:
+        return JsonResponse({
+            'success': False,
+            'error': 'Error removing item from cart'
+        }, status=500)
+
+
+@login_required
+def cart_count(request):
+    """Get current cart count"""
+    try:
+        cart_items = CartItem.objects.filter(user=request.user)
+        cart_count = sum(item.quantity for item in cart_items)
+        cart_total = sum(item.get_total_price() for item in cart_items)
+
+        return JsonResponse({
+            'success': True,
+            'cart_count': cart_count,
+            'cart_total': float(cart_total)
         })
 
     except Exception as e:
-        return JsonResponse({'success': False, 'message': str(e)})
+        return JsonResponse({
+            'success': False,
+            'error': 'Error getting cart count'
+        }, status=500)
 
 
+@login_required
 @require_POST
 def update_cart_quantity(request, product_id):
     """Update cart item quantity via AJAX"""
@@ -162,15 +274,4 @@ def remove_from_cart(request, product_id):
 
     except Exception as e:
         return JsonResponse({'success': False, 'message': str(e)})
-
-
-def cart_count(request):
-    """Get current cart count"""
-    if request.user.is_authenticated:
-        count = CartItem.objects.filter(user=request.user).count()
-    else:
-        cart = request.session.get('cart', {})
-        count = len(cart)
-
-    return JsonResponse({'count': count})
 

@@ -1203,6 +1203,34 @@
     </style>
 </head>
 <body>
+
+    <div class="nav-container">
+        <a href="{% url 'home' %}" class="nav-logo">{{ settings.business_name|default:"Sweet Delights" }}</a>
+
+        <div class="nav-links">
+            <a href="{% url 'home' %}" class="nav-link">Home</a>
+            <a href="{% url 'products' %}" class="nav-link">Products</a>
+            <a href="{% url 'contact' %}" class="nav-link">Contact</a>
+
+            {% if user.is_authenticated %}
+                <!-- Authenticated user links -->
+                <a href="{% url 'cart' %}" class="nav-link cart-link">
+                    Cart
+                    <span class="cart-count" id="cart-count">
+                        {% if cart_items %}({{ cart_items|length }}){% endif %}
+                    </span>
+                </a>
+                <div class="user-dropdown">
+                    <a href="#" class="nav-link user-link">
+                        Hello, {{ user.username }}
+                    </a>
+                    <div class="dropdown-content">
+                        <a href="{% url 'profile' %}">My Profile</a>
+                        <a href="{% url 'cart' %}">My Cart</a>
+                    </div>
+                </div>
+        </div>
+
 <div class="main-container">
     <div class="pos-f-t">
       <div class="collapse" id="navbarToggleExternalContent">

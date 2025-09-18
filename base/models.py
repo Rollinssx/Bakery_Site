@@ -13,7 +13,6 @@ class SiteSettings(models.Model):
         default="Lorem Ipsum is simply dummy text of the printing and typesetting industry..."
     )
     owner_image_url = models.URLField(max_length=500, blank=True)
-    logo = models.ImageField(upload_to='site/', blank=True, null=True)
 
     # Hero section content
     hero_headline = models.CharField(max_length=200, default="Pastries baked with love")
@@ -50,8 +49,8 @@ class SiteSettings(models.Model):
     )
 
     # Add these timestamp fields that the admin expects
-    # created_at = models.DateTimeField(auto_now_add=True)
-    # updated_at = models.DateTimeField(auto_now=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
 
     class Meta:
         verbose_name = "Site Settings"

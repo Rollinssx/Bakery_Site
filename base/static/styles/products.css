@@ -1,5 +1,5 @@
 :root {
-    --primary-purple: rgb(98, 53, 123);
+    --primary-purple: #8B5A96;
     --dark-purple: rgb(98, 53, 123);
     --light-purple: rgb(240, 214, 255);
     --grey-purple: rgb(155, 125, 166);
@@ -19,7 +19,7 @@ body {
 
 /* Header */
 header {
-    background: var(--primary-purple);
+    background: var(--dark-purple);
     color: white;
     padding: 1rem 0;
 }
@@ -34,6 +34,14 @@ header {
     display: flex;
     justify-content: space-between;
     align-items: center;
+    flex-wrap: wrap;
+    gap: 1rem;
+}
+
+@media (min-width: 768px) {
+    .products-navbar {
+        flex-wrap: nowrap;
+    }
 }
 
 .products-logo {
@@ -60,9 +68,57 @@ header {
     color: var(--light-purple);
 }
 
+/* Search Bar */
+.search-container {
+    display: flex;
+    align-items: center;
+    position: relative;
+    flex-grow: 1;
+    order: 3; /* Mobile: move below nav links */
+    width: 100%;
+    margin-top: 1rem;
+}
+
+@media (min-width: 768px) {
+    .search-container {
+        flex-grow: 1;
+        order: 2; /* Desktop: position between logo and nav links */
+        width: auto;
+        margin-top: 0;
+    }
+}
+
+#products-search-bar {
+    width: 100%;
+    padding: 0.75rem 1rem 0.75rem 3rem;
+    border-radius: 25px;
+    border: none;
+    outline: none;
+    font-family: 'Poppins', sans-serif;
+    background-color: rgba(255, 255, 255, 0.2);
+    color: white;
+    transition: background-color 0.3s;
+}
+
+#products-search-bar::placeholder {
+    color: rgba(255, 255, 255, 0.7);
+}
+
+#products-search-bar:focus {
+    background-color: rgba(255, 255, 255, 0.3);
+}
+
+.search-icon {
+    position: absolute;
+    left: 1rem;
+    width: 20px;
+    height: 20px;
+    fill: rgba(255, 255, 255, 0.7);
+}
+
 /* Hero Section */
 .products-hero-section {
-    background: var(--primary-purple);
+    background: var(--dark-purple);
     color: white;
     padding: 4rem 0;
     text-align: center;
@@ -95,7 +151,7 @@ header {
 
 .products-filter-tab {
     background: white;
-    border: 2px solid var(--primary-purple);
+    border: 2px solid var(--dark-purple);
     color: var(--primary-purple);
     padding: 0.5rem 1.5rem;
     border-radius: 25px;
@@ -106,7 +162,7 @@ header {
 
 .products-filter-tab.active,
 .products-filter-tab:hover {
-    background: var(--primary-purple);
+    background: var(--dark-purple);
     color: white;
 }
 
@@ -156,6 +212,7 @@ header {
 
 /* Products Grid */
 .products-section {
+    padding: 3rem 0;
     background: #f8f9fa;
 }
 
@@ -164,7 +221,6 @@ header {
     grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
     gap: 2rem;
     margin-top: 2rem;
-    margin-bottom: 4rem;
 }
 
 .products-product-card {
@@ -253,6 +309,14 @@ header {
     cursor: not-allowed;
 }
 
+.no-products-message {
+    display: none;
+    text-align: center;
+    font-size: 1.2rem;
+    color: #666;
+    margin-top: 2rem;
+}
+
 /* Footer */
 .products-footer {
     background: var(--dark-purple);
@@ -309,6 +373,13 @@ header {
 @media (max-width: 768px) {
     .products-hero-section h1 {
         font-size: 2.5rem;
+    }
+
+    .search-container {
+        flex-grow: 1;
+        order: 2; /* Desktop: position between logo and nav links */
+        width: auto;
+        margin-top: 0;
     }
 
     .products-filter-tabs {

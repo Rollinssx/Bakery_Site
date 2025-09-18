@@ -1,0 +1,636 @@
+<!doctype html>
+{% load static %}
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Customers Management - Admin Dashboard</title>
+
+    <!-- Bootstrap & Fonts -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&family=Schoolbell&display=swap" rel="stylesheet">
+    <link href="https://fonts.cdnfonts.com/css/magnolia-script" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+
+    <style>
+        :root {
+            --primary-purple: #8B5A96;
+            --dark-purple: rgb(98, 53, 123);
+            --light-purple: rgb(240, 214, 255);
+            --grey-purple: rgb(155, 125, 166);
+            --success-green: #28a745;
+            --warning-yellow: #ffc107;
+            --danger-red: #dc3545;
+            --info-blue: #17a2b8;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Poppins', sans-serif;
+            background-color: #f8f9fa;
+        }
+
+        /* Sidebar */
+        .sidebar {
+            background: var(--dark-purple);
+            color: white;
+            min-height: 100vh;
+            width: 280px;
+            position: fixed;
+            left: 0;
+            top: 0;
+            z-index: 1000;
+            overflow-y: auto;
+        }
+
+        .sidebar-header {
+            padding: 2rem 1.5rem;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+        }
+
+        .sidebar-header h3 {
+            font-family: 'Magnolia Script', cursive;
+            font-size: 2rem;
+            margin: 0;
+        }
+
+        .sidebar-menu {
+            padding: 1rem 0;
+        }
+
+        .sidebar-menu .menu-item {
+            display: block;
+            padding: 1rem 1.5rem;
+            color: rgba(255,255,255,0.8);
+            text-decoration: none;
+            transition: all 0.3s;
+        }
+
+        .sidebar-menu .menu-item:hover,
+        .sidebar-menu .menu-item.active {
+            background: rgba(255,255,255,0.1);
+            color: white;
+            transform: translateX(5px);
+        }
+
+        .sidebar-menu .menu-item i {
+            margin-right: 10px;
+            width: 20px;
+        }
+
+        /* Main Content */
+        .main-content {
+            margin-left: 280px;
+            padding: 2rem;
+        }
+
+        .page-header {
+            background: white;
+            padding: 1.5rem 2rem;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            margin-bottom: 2rem;
+        }
+
+        .page-header h1 {
+            font-size: 2rem;
+            color: var(--dark-purple);
+            margin: 0;
+        }
+
+        /* Stats Cards */
+        .stats-row {
+            margin-bottom: 2rem;
+        }
+
+        .stat-card {
+            background: white;
+            border-radius: 10px;
+            padding: 1.5rem;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            border-left: 4px solid;
+            text-align: center;
+        }
+
+        .stat-card.total { border-left-color: var(--info-blue); }
+        .stat-card.repeat { border-left-color: var(--success-green); }
+        .stat-card.new { border-left-color: var(--warning-yellow); }
+        .stat-card.vip { border-left-color: var(--primary-purple); }
+
+        .stat-number {
+            font-size: 2rem;
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+        }
+
+        .stat-label {
+            color: #6c757d;
+            font-size: 0.9rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        /* Customers Container */
+        .customers-container {
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+
+        .customers-header {
+            padding: 1.5rem 2rem;
+            background: var(--light-purple);
+            border-bottom: 1px solid #e9ecef;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .customers-header h3 {
+            margin: 0;
+            color: var(--dark-purple);
+        }
+
+        .filter-controls {
+            display: flex;
+            gap: 1rem;
+            align-items: center;
+        }
+
+        .search-input {
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            padding: 0.5rem 1rem;
+            width: 250px;
+        }
+
+        /* Customers Table */
+        .customers-table {
+            width: 100%;
+            margin: 0;
+        }
+
+        .customers-table th {
+            background: #f8f9fa;
+            padding: 1rem;
+            font-weight: 600;
+            color: var(--dark-purple);
+            border-bottom: 2px solid #e9ecef;
+        }
+
+        .customers-table td {
+            padding: 1rem;
+            border-bottom: 1px solid #e9ecef;
+            vertical-align: middle;
+        }
+
+        .customers-table tbody tr:hover {
+            background-color: #f8f9fa;
+        }
+
+        .customer-avatar {
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            background: var(--light-purple);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--dark-purple);
+            font-weight: bold;
+            font-size: 1.2rem;
+        }
+
+        .customer-info h6 {
+            margin: 0;
+            color: var(--dark-purple);
+        }
+
+        .customer-info small {
+            color: #6c757d;
+        }
+
+        .customer-badge {
+            padding: 0.25rem 0.5rem;
+            border-radius: 12px;
+            font-size: 0.8rem;
+            font-weight: 500;
+        }
+
+        .badge-vip { background: var(--primary-purple); color: white; }
+        .badge-regular { background: var(--light-purple); color: var(--dark-purple); }
+        .badge-new { background: var(--warning-yellow); color: #333; }
+
+        .action-btn {
+            padding: 0.4rem 0.8rem;
+            border: none;
+            border-radius: 5px;
+            font-size: 0.8rem;
+            cursor: pointer;
+            margin-right: 0.5rem;
+            transition: all 0.3s;
+        }
+
+        .btn-view { background: var(--info-blue); color: white; }
+        .btn-email { background: var(--success-green); color: white; }
+        .btn-orders { background: var(--primary-purple); color: white; }
+
+        .action-btn:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+        }
+
+        /* Pagination */
+        .pagination {
+            justify-content: center;
+            margin: 2rem 0;
+        }
+
+        .page-link {
+            color: var(--primary-purple);
+            border-color: var(--light-purple);
+        }
+
+        .page-link:hover {
+            color: var(--dark-purple);
+            background-color: var(--light-purple);
+            border-color: var(--primary-purple);
+        }
+
+        .page-item.active .page-link {
+            background-color: var(--primary-purple);
+            border-color: var(--primary-purple);
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .sidebar {
+                transform: translateX(-100%);
+                transition: transform 0.3s;
+            }
+
+            .sidebar.show {
+                transform: translateX(0);
+            }
+
+            .main-content {
+                margin-left: 0;
+                padding: 1rem;
+            }
+
+            .customers-header {
+                flex-direction: column;
+                gap: 1rem;
+            }
+
+            .search-input {
+                width: 100%;
+            }
+
+            .customers-table {
+                font-size: 0.9rem;
+            }
+
+            .customers-table th,
+            .customers-table td {
+                padding: 0.5rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Sidebar -->
+    <div class="sidebar" id="sidebar">
+        <div class="sidebar-header">
+            <h3>{{ site_settings.business_name|default:"Sweet Delights" }}</h3>
+            <p>Admin Dashboard</p>
+        </div>
+
+        <nav class="sidebar-menu">
+            <a href="{% url 'admin_dashboard' %}" class="menu-item">
+                <i class="fas fa-chart-bar"></i>
+                Dashboard
+            </a>
+            <a href="{% url 'admin_orders' %}" class="menu-item">
+                <i class="fas fa-shopping-cart"></i>
+                Orders
+            </a>
+            <a href="{% url 'admin_products' %}" class="menu-item">
+                <i class="fas fa-box"></i>
+                Products
+            </a>
+            <a href="{% url 'admin_customers' %}" class="menu-item active">
+                <i class="fas fa-users"></i>
+                Customers
+            </a>
+            <a href="{% url 'admin_messages' %}" class="menu-item">
+                <i class="fas fa-envelope"></i>
+                Messages
+            </a>
+            <a href="{% url 'admin_settings' %}" class="menu-item">
+                <i class="fas fa-cog"></i>
+                Settings
+            </a>
+            <a href="{% url 'home' %}" class="menu-item">
+                <i class="fas fa-home"></i>
+                View Site
+            </a>
+        </nav>
+    </div>
+
+    <!-- Main Content -->
+    <div class="main-content">
+        <!-- Page Header -->
+        <div class="page-header">
+            <button class="btn btn-primary d-md-none mb-2" onclick="toggleSidebar()">
+                <i class="fas fa-bars"></i> Menu
+            </button>
+            <h1>Customers Management</h1>
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb">
+                    <li class="breadcrumb-item"><a href="{% url 'admin_dashboard' %}">Dashboard</a></li>
+                    <li class="breadcrumb-item active">Customers</li>
+                </ol>
+            </nav>
+        </div>
+
+        <!-- Stats Cards -->
+        <div class="row stats-row">
+            <div class="col-lg-3 col-md-6 mb-3">
+                <div class="stat-card total">
+                    <div class="stat-number text-info">127</div>
+                    <div class="stat-label">Total Customers</div>
+                </div>
+            </div>
+            <div class="col-lg-3 col-md-6 mb-3">
+                <div class="stat-card repeat">
+                    <div class="stat-number text-success">89</div>
+                    <div class="stat-label">Repeat Customers</div>
+                </div>
+            </div>
+            <div class="col-lg-3 col-md-6 mb-3">
+                <div class="stat-card new">
+                    <div class="stat-number text-warning">12</div>
+                    <div class="stat-label">New This Month</div>
+                </div>
+            </div>
+            <div class="col-lg-3 col-md-6 mb-3">
+                <div class="stat-card vip">
+                    <div class="stat-number" style="color: var(--primary-purple)">15</div>
+                    <div class="stat-label">VIP Customers</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Customers Table -->
+        <div class="customers-container">
+            <div class="customers-header">
+                <h3>Customer Database</h3>
+                <div class="filter-controls">
+                    <input type="text" class="search-input" placeholder="Search customers..." id="searchInput">
+                </div>
+            </div>
+
+            <div class="table-responsive">
+                <table class="table customers-table">
+                    <thead>
+                        <tr>
+                            <th>Customer</th>
+                            <th>Contact</th>
+                            <th>Orders</th>
+                            <th>Total Spent</th>
+                            <th>Status</th>
+                            <th>Last Order</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for customer in customers %}
+                        <tr>
+                            <td>
+                                <div class="d-flex align-items-center">
+                                    <div class="customer-avatar">
+                                        {{ customer.customer_name|first|upper }}
+                                    </div>
+                                    <div class="customer-info ms-3">
+                                        <h6>{{ customer.customer_name }}</h6>
+                                        <small>Customer since {{ customer.first_order|date:"M Y" }}</small>
+                                    </div>
+                                </div>
+                            </td>
+                            <td>
+                                <div>{{ customer.customer_email }}</div>
+                                <small class="text-muted">{{ customer.customer_phone }}</small>
+                            </td>
+                            <td><strong>{{ customer.total_orders }}</strong> orders</td>
+                            <td><strong>KES {{ customer.total_spent|floatformat:0 }}</strong></td>
+                            <td>
+                                {% if customer.total_spent >= 20000 %}
+                                    <span class="customer-badge badge-vip">VIP</span>
+                                {% elif customer.total_orders >= 3 %}
+                                    <span class="customer-badge badge-regular">Regular</span>
+                                {% else %}
+                                    <span class="customer-badge badge-new">New</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                {{ customer.last_order|date:"M d, Y" }}<br>
+                                <small>{{ customer.last_order|timesince }} ago</small>
+                            </td>
+                            <td>
+                                <button class="action-btn btn-view" onclick="viewCustomer('{{ customer.customer_email }}')">
+                                    <i class="fas fa-eye"></i>
+                                </button>
+                                <button class="action-btn btn-email" onclick="emailCustomer('{{ customer.customer_email }}')">
+                                    <i class="fas fa-envelope"></i>
+                                </button>
+                                <button class="action-btn btn-orders" onclick="viewOrders('{{ customer.customer_email }}')">
+                                    <i class="fas fa-shopping-cart"></i>
+                                </button>
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <!-- Sample data for demo -->
+                        <tr>
+                            <td>
+                                <div class="d-flex align-items-center">
+                                    <div class="customer-avatar">S</div>
+                                    <div class="customer-info ms-3">
+                                        <h6>Sarah Johnson</h6>
+                                        <small>Customer since Jan 2024</small>
+                                    </div>
+                                </div>
+                            </td>
+                            <td>
+                                <div>sarah.johnson@email.com</div>
+                                <small class="text-muted">+254 712 345 678</small>
+                            </td>
+                            <td><strong>8</strong> orders</td>
+                            <td><strong>KES 28,500</strong></td>
+                            <td><span class="customer-badge badge-vip">VIP</span></td>
+                            <td>
+                                Dec 15, 2024<br>
+                                <small>3 days ago</small>
+                            </td>
+                            <td>
+                                <button class="action-btn btn-view" onclick="viewCustomer('sarah.johnson@email.com')">
+                                    <i class="fas fa-eye"></i>
+                                </button>
+                                <button class="action-btn btn-email" onclick="emailCustomer('sarah.johnson@email.com')">
+                                    <i class="fas fa-envelope"></i>
+                                </button>
+                                <button class="action-btn btn-orders" onclick="viewOrders('sarah.johnson@email.com')">
+                                    <i class="fas fa-shopping-cart"></i>
+                                </button>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>
+                                <div class="d-flex align-items-center">
+                                    <div class="customer-avatar">M</div>
+                                    <div class="customer-info ms-3">
+                                        <h6>Michael Chen</h6>
+                                        <small>Customer since Mar 2024</small>
+                                    </div>
+                                </div>
+                            </td>
+                            <td>
+                                <div>m.chen@business.com</div>
+                                <small class="text-muted">+254 723 456 789</small>
+                            </td>
+                            <td><strong>5</strong> orders</td>
+                            <td><strong>KES 47,200</strong></td>
+                            <td><span class="customer-badge badge-vip">VIP</span></td>
+                            <td>
+                                Dec 10, 2024<br>
+                                <small>1 week ago</small>
+                            </td>
+                            <td>
+                                <button class="action-btn btn-view">
+                                    <i class="fas fa-eye"></i>
+                                </button>
+                                <button class="action-btn btn-email">
+                                    <i class="fas fa-envelope"></i>
+                                </button>
+                                <button class="action-btn btn-orders">
+                                    <i class="fas fa-shopping-cart"></i>
+                                </button>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>
+                                <div class="d-flex align-items-center">
+                                    <div class="customer-avatar">E</div>
+                                    <div class="customer-info ms-3">
+                                        <h6>Emma Wilson</h6>
+                                        <small>Customer since Nov 2024</small>
+                                    </div>
+                                </div>
+                            </td>
+                            <td>
+                                <div>emma.w@gmail.com</div>
+                                <small class="text-muted">+254 734 567 890</small>
+                            </td>
+                            <td><strong>2</strong> orders</td>
+                            <td><strong>KES 6,300</strong></td>
+                            <td><span class="customer-badge badge-new">New</span></td>
+                            <td>
+                                Dec 12, 2024<br>
+                                <small>6 days ago</small>
+                            </td>
+                            <td>
+                                <button class="action-btn btn-view">
+                                    <i class="fas fa-eye"></i>
+                                </button>
+                                <button class="action-btn btn-email">
+                                    <i class="fas fa-envelope"></i>
+                                </button>
+                                <button class="action-btn btn-orders">
+                                    <i class="fas fa-shopping-cart"></i>
+                                </button>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Pagination -->
+            {% if customers.has_other_pages %}
+            <nav aria-label="Customers pagination">
+                <ul class="pagination">
+                    {% if customers.has_previous %}
+                        <li class="page-item">
+                            <a class="page-link" href="?page={{ customers.previous_page_number }}">Previous</a>
+                        </li>
+                    {% endif %}
+
+                    {% for num in customers.paginator.page_range %}
+                        {% if customers.number == num %}
+                            <li class="page-item active">
+                                <span class="page-link">{{ num }}</span>
+                            </li>
+                        {% elif num > customers.number|add:'-3' and num < customers.number|add:'3' %}
+                            <li class="page-item">
+                                <a class="page-link" href="?page={{ num }}">{{ num }}</a>
+                            </li>
+                        {% endif %}
+                    {% endfor %}
+
+                    {% if customers.has_next %}
+                        <li class="page-item">
+                            <a class="page-link" href="?page={{ customers.next_page_number }}">Next</a>
+                        </li>
+                    {% endif %}
+                </ul>
+            </nav>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+
+    <script>
+        // Toggle sidebar on mobile
+        function toggleSidebar() {
+            const sidebar = document.getElementById('sidebar');
+            sidebar.classList.toggle('show');
+        }
+
+        // Search functionality
+        document.getElementById('searchInput').addEventListener('input', function() {
+            const searchTerm = this.value.toLowerCase();
+            const rows = document.querySelectorAll('.customers-table tbody tr');
+
+            rows.forEach(row => {
+                const text = row.textContent.toLowerCase();
+                row.style.display = text.includes(searchTerm) ? '' : 'none';
+            });
+        });
+
+        // Customer actions
+        function viewCustomer(email) {
+            // Show customer details modal or redirect to detail page
+            alert(`Viewing details for: ${email}`);
+        }
+
+        function emailCustomer(email) {
+            // Open email composer
+            window.open(`mailto:${email}?subject=Thank you for choosing ${window.businessName || 'Sweet Delights'}`);
+        }
+
+        function viewOrders(email) {
+            // Redirect to orders filtered by this customer
+            window.location.href = `/admin-panel/orders/?search=${encodeURIComponent(email)}`;
+        }
+    </script>
+</body>
+</html>
+

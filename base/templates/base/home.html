@@ -1,18 +1,28 @@
 {% extends "main.html" %}
 {% load static %}
 <head>
-    <title>{%  block title %}Home{% endblock %}{{ site_settings.site_name }}</title>
+    <meta name="description" content="Get in touch with {{ site_settings.business_name|default:'Sweet Delights' }}. We'd love to hear from you!">
+    <title>{% block title %}Home{% endblock title %}{{ site_settings.business_name|default:"Sweet Delights" }}</title>
 </head>
 {% block content %}
-<div class="pos-f-t">
+    <div class="pos-f-t">
       <div class="collapse" id="navbarToggleExternalContent">
         <div class="p-4 bg-custom-collapsed">
+        {% if user.is_authenticated %}
+                <p class="mobile-nav-one">
+                    <a href="{% url 'logout' %}" style="color: inherit; text-decoration: none;">Logout</a>
+                </p>
+                <p class="mobile-nav-two">
+                  <a href="{% url 'cart' %}" style="color: inherit; text-decoration: none;">My cart</a>
+                </p>
+        {% else %}
             <p class="mobile-nav-one">
-                <a href="{% url 'home' %}" style="color: inherit; text-decoration: none;">Home</a>
+                <a href="{% url 'login' %}" style="color: inherit; text-decoration: none;">Login</a>
             </p>
             <p class="mobile-nav-two">
               <a href="{% url 'cart' %}" style="color: inherit; text-decoration: none;">My cart</a>
             </p>
+        {% endif %}
         </div>
       </div>
       <nav class="navbar navbar-dark navbar-custom">
@@ -24,9 +34,86 @@
     <body>
         <div class="main-container">
             <section class="hero">
-                <nav class="laptop-navbar">
+                {% if user.is_authenticated %}
+                    <nav class="laptop-navbar">
                     <p class="nav-home">
-                        <a href="{% url 'home' %}" style="color: inherit; text-decoration: none;">Home</a>
+                        <div class="btn-group">
+                          <button type="button" class="btn btn-link dropdown-toggle nav-dropdown-btn" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                            Menu
+                          </button>
+                          <div class="dropdown-menu">
+                            <a class="dropdown-item" href="{% url 'home' %}">
+                                <svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px" fill="#FFFFFF">
+                                    <path d="M240-200h120v-240h240v240h120v-360L480-740 240-560v360Zm-80 80v-480l320-240 320 240v480H520v-240h-80v240H160Zm320-350Z"/>
+                                </svg>
+                                Home
+                            </a>
+                            <a class="dropdown-item" href="{% url 'products' %}">
+                                <svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px" fill="#FFFFFF">
+                                    <path d="M160-80q-17 0-28.5-11.5T120-120v-200q0-33 23.5-56.5T200-400v-160q0-33 23.5-56.5T280-640h160v-58q-18-12-29-29t-11-41q0-15 6-29.5t18-26.5l56-56 56 56q12 12 18 26.5t6 29.5q0 24-11 41t-29 29v58h160q33 0 56.5 23.5T760-560v160q33 0 56.5 23.5T840-320v200q0 17-11.5 28.5T800-80H160Zm120-320h400v-160H280v160Zm-80 240h560v-160H200v160Zm80-240h400-400Zm-80 240h560-560Zm560-240H200h560Z"/>
+                                </svg>
+                                Products
+                            </a>
+                            <a class="dropdown-item" href="{% url 'contact' %}">
+                                <svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px" fill="#FFFFFF">
+                                    <path d="M760-480q0-117-81.5-198.5T480-760v-80q75 0 140.5 28.5t114 77q48.5 48.5 77 114T840-480h-80Zm-160 0q0-50-35-85t-85-35v-80q83 0 141.5 58.5T680-480h-80Zm198 360q-125 0-247-54.5T329-329Q229-429 174.5-551T120-798q0-18 12-30t30-12h162q14 0 25 9.5t13 22.5l26 140q2 16-1 27t-11 19l-97 98q20 37 47.5 71.5T387-386q31 31 65 57.5t72 48.5l94-94q9-9 23.5-13.5T670-390l138 28q14 4 23 14.5t9 23.5v162q0 18-12 30t-30 12ZM241-600l66-66-17-94h-89q5 41 14 81t26 79Zm358 358q39 17 79.5 27t81.5 13v-88l-94-19-67 67ZM241-600Zm358 358Z"/>
+                                </svg>
+                                Contact
+                            </a>
+                            <div class="dropdown-divider"></div>
+                            <a class="dropdown-item" href="{% url 'logout' %}">
+                                <svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px" fill="#FFFFFF">
+                                    <path d="M480-480q-66 0-113-47t-47-113q0-66 47-113t113-47q66 0 113 47t47 113q0 66-47 113t-113 47ZM160-160v-112q0-34 17.5-62.5T224-378q62-31 126-46.5T480-440q66 0 130 15.5T736-378q29 15 46.5 43.5T800-272v112H160Zm80-80h480v-32q0-11-5.5-20T700-306q-54-27-109-40.5T480-360q-56 0-111 13.5T260-306q-9 5-14.5 14t-5.5 20v32Zm240-320q33 0 56.5-23.5T560-640q0-33-23.5-56.5T480-720q-33 0-56.5 23.5T400-640q0 33 23.5 56.5T480-560Zm0-80Zm0 400Z"/>
+                                </svg>
+                                Logout
+                            </a>
+                          </div>
+                        </div>
+                    </p>
+                    <p class="nav-cart">
+                        <a href="{% url 'cart' %}" style="color: inherit; text-decoration: none;">
+                            <span class="nav-my">My</span>
+                            <span class="nav-cart-text">
+                                cart
+                            </span>
+                        </a>
+                    </p>
+                </nav>
+                {% else %}
+                    <nav class="laptop-navbar">
+                    <p class="nav-home">
+                        <div class="btn-group">
+                          <button type="button" class="btn btn-link dropdown-toggle nav-dropdown-btn" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                            Menu
+                          </button>
+                          <div class="dropdown-menu">
+                            <a class="dropdown-item" href="{% url 'home' %}">
+                                <svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px" fill="#FFFFFF">
+                                    <path d="M240-200h120v-240h240v240h120v-360L480-740 240-560v360Zm-80 80v-480l320-240 320 240v480H520v-240h-80v240H160Zm320-350Z"/>
+                                </svg>
+                                Home
+                            </a>
+                            <a class="dropdown-item" href="{% url 'products' %}">
+                                <svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px" fill="#FFFFFF">
+                                    <path d="M160-80q-17 0-28.5-11.5T120-120v-200q0-33 23.5-56.5T200-400v-160q0-33 23.5-56.5T280-640h160v-58q-18-12-29-29t-11-41q0-15 6-29.5t18-26.5l56-56 56 56q12 12 18 26.5t6 29.5q0 24-11 41t-29 29v58h160q33 0 56.5 23.5T760-560v160q33 0 56.5 23.5T840-320v200q0 17-11.5 28.5T800-80H160Zm120-320h400v-160H280v160Zm-80 240h560v-160H200v160Zm80-240h400-400Zm-80 240h560-560Zm560-240H200h560Z"/>
+                                </svg>
+                                Products
+                            </a>
+                            <a class="dropdown-item" href="{% url 'contact' %}">
+                                <svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px" fill="#FFFFFF">
+                                    <path d="M760-480q0-117-81.5-198.5T480-760v-80q75 0 140.5 28.5t114 77q48.5 48.5 77 114T840-480h-80Zm-160 0q0-50-35-85t-85-35v-80q83 0 141.5 58.5T680-480h-80Zm198 360q-125 0-247-54.5T329-329Q229-429 174.5-551T120-798q0-18 12-30t30-12h162q14 0 25 9.5t13 22.5l26 140q2 16-1 27t-11 19l-97 98q20 37 47.5 71.5T387-386q31 31 65 57.5t72 48.5l94-94q9-9 23.5-13.5T670-390l138 28q14 4 23 14.5t9 23.5v162q0 18-12 30t-30 12ZM241-600l66-66-17-94h-89q5 41 14 81t26 79Zm358 358q39 17 79.5 27t81.5 13v-88l-94-19-67 67ZM241-600Zm358 358Z"/>
+                                </svg>
+                                Contact
+                            </a>
+                            <div class="dropdown-divider"></div>
+                            <a class="dropdown-item" href="{% url 'login' %}">
+                                <svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px" fill="#FFFFFF">
+                                    <path d="M480-480q-66 0-113-47t-47-113q0-66 47-113t113-47q66 0 113 47t47 113q0 66-47 113t-113 47ZM160-160v-112q0-34 17.5-62.5T224-378q62-31 126-46.5T480-440q66 0 130 15.5T736-378q29 15 46.5 43.5T800-272v112H160Zm80-80h480v-32q0-11-5.5-20T700-306q-54-27-109-40.5T480-360q-56 0-111 13.5T260-306q-9 5-14.5 14t-5.5 20v32Zm240-320q33 0 56.5-23.5T560-640q0-33-23.5-56.5T480-720q-33 0-56.5 23.5T400-640q0 33 23.5 56.5T480-560Zm0-80Zm0 400Z"/>
+                                </svg>
+                                Login
+                            </a>
+                          </div>
+                        </div>
                     </p>
                     <p class="nav-cart">
                       <span class="nav-my">My</span>
@@ -35,6 +122,7 @@
                       </span>
                     </p>
                 </nav>
+                {% endif %}
           <!-- TEXT CONTENT -->
           <div class="hero-content">
               <h1 class="headline">{{ site_settings.hero_headline|default:"Pastries baked with love" }}</h1>
@@ -179,9 +267,6 @@
                 </form>
               </div>
             </section>
-
-        </div>
-
         <!-- Messages Framework for Django -->
         {% if messages %}
             <div class="position-fixed top-0 end-0 p-3" style="z-index: 1050;">
@@ -200,6 +285,3 @@
         {% endif %}
     </body>
 {% endblock content %}
-
-
-

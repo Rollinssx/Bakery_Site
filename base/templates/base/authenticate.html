@@ -1,0 +1,252 @@
+<!DOCTYPE html>
+{% load static %}
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Account - Sweet Delights</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Magnolia+Script&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{% static 'styles/authenticate.css' %}">
+
+<title>Account - {{ settings.business_name|default:"Sweet Delights" }}</title>
+
+<body>
+    <header>
+        <a href="{% url 'home' %}" class="account-logo">{{ settings.business_name|default:"Sweet Delights" }}</a>
+        <div class="back-to-site">
+            <a href="{% url 'home' %}">← Back to Site</a>
+        </div>
+    </header>
+
+    <div class="auth-container">
+        <!-- Django Messages -->
+        {% if messages %}
+            {% for message in messages %}
+                <div class="message-box {{ message.tags }}">
+                    {{ message }}
+                </div>
+            {% endfor %}
+        {% endif %}
+
+        <!-- Login Form -->
+        <div id="login-view">
+            <h2>Log In</h2>
+            <p>Welcome back! Please sign in to your account.</p>
+            <form method="post" id="login-form">
+                {% csrf_token %}
+                <input type="hidden" name="form_type" value="login">
+                
+                <div class="form-group">
+                    <label for="login-username">Username or Email</label>
+                    <input type="text" 
+                           id="login-username" 
+                           name="username" 
+                           class="form-control" 
+                           placeholder="Enter your username or email" 
+                           value="{{ login_form.username.value|default:'' }}"
+                           required>
+                    {% if login_form.username.errors %}
+                        <div class="field-errors">
+                            {% for error in login_form.username.errors %}
+                                <div>{{ error }}</div>
+                            {% endfor %}
+                        </div>
+                    {% endif %}
+                </div>
+
+                <div class="form-group">
+                    <label for="login-password">Password</label>
+                    <input type="password" 
+                           id="login-password" 
+                           name="password" 
+                           class="form-control" 
+                           placeholder="Enter your password" 
+                           required>
+                    {% if login_form.password.errors %}
+                        <div class="field-errors">
+                            {% for error in login_form.password.errors %}
+                                <div>{{ error }}</div>
+                            {% endfor %}
+                        </div>
+                    {% endif %}
+                </div>
+
+                {% if login_form.non_field_errors %}
+                    <div class="message-box error">
+                        {% for error in login_form.non_field_errors %}
+                            {{ error }}
+                        {% endfor %}
+                    </div>
+                {% endif %}
+
+                <button type="submit" class="auth-btn" id="login-btn">
+                    <span class="btn-text">Log In</span>
+                </button>
+            </form>
+            
+            <div class="form-toggle">
+                Don't have an account? <a href="#" id="show-signup">Sign Up</a>
+            </div>
+        </div>
+
+        <!-- Signup Form -->
+        <div id="signup-view" style="display:none;">
+            <h2>Sign Up</h2>
+            <p>Create an account to start enjoying our treats!</p>
+            <form method="post" id="signup-form">
+                {% csrf_token %}
+                <input type="hidden" name="form_type" value="signup">
+                
+                <div class="form-group">
+                    <label for="signup-username">Username</label>
+                    <input type="text" 
+                           id="signup-username" 
+                           name="username" 
+                           class="form-control" 
+                           placeholder="Choose a username" 
+                           value="{{ signup_form.username.value|default:'' }}"
+                           required>
+                    {% if signup_form.username.errors %}
+                        <div class="field-errors">
+                            {% for error in signup_form.username.errors %}
+                                <div>{{ error }}</div>
+                            {% endfor %}
+                        </div>
+                    {% endif %}
+                </div>
+
+                <div class="form-group">
+                    <label for="signup-email">Email Address</label>
+                    <input type="email" 
+                           id="signup-email" 
+                           name="email" 
+                           class="form-control" 
+                           placeholder="your@email.com" 
+                           value="{{ signup_form.email.value|default:'' }}"
+                           required>
+                    {% if signup_form.email.errors %}
+                        <div class="field-errors">
+                            {% for error in signup_form.email.errors %}
+                                <div>{{ error }}</div>
+                            {% endfor %}
+                        </div>
+                    {% endif %}
+                </div>
+
+                <div class="form-group">
+                    <label for="signup-password1">Password</label>
+                    <input type="password" 
+                           id="signup-password1" 
+                           name="password1" 
+                           class="form-control" 
+                           placeholder="Choose a strong password" 
+                           required>
+                    {% if signup_form.password1.errors %}
+                        <div class="field-errors">
+                            {% for error in signup_form.password1.errors %}
+                                <div>{{ error }}</div>
+                            {% endfor %}
+                        </div>
+                    {% endif %}
+                </div>
+
+                <div class="form-group">
+                    <label for="signup-password2">Confirm Password</label>
+                    <input type="password" 
+                           id="signup-password2" 
+                           name="password2" 
+                           class="form-control" 
+                           placeholder="Confirm your password" 
+                           required>
+                    {% if signup_form.password2.errors %}
+                        <div class="field-errors">
+                            {% for error in signup_form.password2.errors %}
+                                <div>{{ error }}</div>
+                            {% endfor %}
+                        </div>
+                    {% endif %}
+                </div>
+
+                {% if signup_form.non_field_errors %}
+                    <div class="message-box error">
+                        {% for error in signup_form.non_field_errors %}
+                            {{ error }}
+                        {% endfor %}
+                    </div>
+                {% endif %}
+
+                <button type="submit" class="auth-btn" id="signup-btn">
+                    <span class="btn-text">Sign Up</span>
+                </button>
+            </form>
+            
+            <div class="form-toggle">
+                Already have an account? <a href="#" id="show-login">Log In</a>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // UI toggling between login and signup
+        const loginView = document.getElementById('login-view');
+        const signupView = document.getElementById('signup-view');
+        const showLoginLink = document.getElementById('show-login');
+        const showSignupLink = document.getElementById('show-signup');
+
+        const showView = (view) => {
+            if (view === 'login') {
+                loginView.style.display = 'block';
+                signupView.style.display = 'none';
+            } else {
+                loginView.style.display = 'none';
+                signupView.style.display = 'block';
+            }
+        };
+
+        showLoginLink.addEventListener('click', (e) => {
+            e.preventDefault();
+            showView('login');
+        });
+
+        showSignupLink.addEventListener('click', (e) => {
+            e.preventDefault();
+            showView('signup');
+        });
+
+        // Show signup view if there are signup form errors
+        {% if signup_form.errors %}
+            showView('signup');
+        {% endif %}
+
+        // Loading states for form submission
+        document.getElementById('login-form').addEventListener('submit', function() {
+            const btn = document.getElementById('login-btn');
+            const btnText = btn.querySelector('.btn-text');
+            btn.disabled = true;
+            btnText.innerHTML = '<span class="loading"></span> Logging in...';
+        });
+
+        document.getElementById('signup-form').addEventListener('submit', function() {
+            const btn = document.getElementById('signup-btn');
+            const btnText = btn.querySelector('.btn-text');
+            btn.disabled = true;
+            btnText.innerHTML = '<span class="loading"></span> Creating account...';
+        });
+
+        // Auto-hide messages after 5 seconds
+        document.addEventListener('DOMContentLoaded', function() {
+            const messages = document.querySelectorAll('.message-box');
+            messages.forEach(message => {
+                if (!message.classList.contains('error')) {
+                    setTimeout(() => {
+                        message.style.opacity = '0';
+                        setTimeout(() => message.remove(), 300);
+                    }, 5000);
+                }
+            });
+        });
+    </script>
+</body>

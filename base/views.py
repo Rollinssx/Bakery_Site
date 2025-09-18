@@ -4,15 +4,23 @@ from rest_framework.decorators import action
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated, IsAuthenticatedOrReadOnly, AllowAny
 from django_filters.rest_framework import DjangoFilterBackend
-from django.shortcuts import get_object_or_404, render, redirect
-from django.contrib import messages
 from django.db.models import Q
 from django.core.paginator import Paginator
-from django.shortcuts import render, redirect
-from django.contrib import messages
 from django.core.mail import send_mail
 from django.conf import settings
-from .models import Product, Category, CartItem, ContactMessage, SiteSettings
+from django.shortcuts import get_object_or_404
+from django.utils import timezone
+from datetime import datetime, timedelta
+from django.db import transaction
+import uuid
+from .models import CartItem
+from django.contrib.auth import authenticate, login, logout
+from django.contrib.auth.forms import AuthenticationForm, UserCreationForm
+from django.contrib.auth.decorators import login_required
+from django.contrib.auth.models import User
+from django.contrib import messages
+from django.shortcuts import render, redirect
+from django import forms
 
 
 from base.models import (
@@ -140,7 +148,52 @@ def contact(request):
 
 
 def checkout(request):
-    return render(request, 'base/checkout.html')
+    """Checkout view - handles both GET (show form) and POST (process order)"""
+
+    # Get site settings
+    settings = SiteSettings.objects.first()
+    if not settings:
+        settings = SiteSettings()  # Use defaults if no settings exist
+
+    # Get cart items
+    cart_items = []
+    cart_total = 0
+
+    if request.user.is_authenticated:
+        # For authenticated users, get from database
+        cart_items = CartItem.objects.filter(user=request.user).select_related('product')
+        cart_total = sum(item.get_total_price() for item in cart_items)
+    else:
+        # For anonymous users, you might want to implement session-based cart
+        # For now, redirect to cart page
+        messages.warning(request, 'Please add items to your cart first.')
+        return redirect('cart')
+
+    # Calculate minimum delivery date based on notice required
+    notice_hours = 24  # Default 24 hours
+    try:
+        if settings.minimum_order_notice:
+            notice_text = settings.minimum_order_notice.lower()
+            if 'hour' in notice_text:
+                notice_hours = int(''.join(filter(str.isdigit, notice_text))) or 24
+            elif 'day' in notice_text:
+                notice_hours = (int(''.join(filter(str.isdigit, notice_text))) or 1) * 24
+    except:
+        notice_hours = 24
+
+    min_delivery_date = (timezone.now() + timedelta(hours=notice_hours)).strftime('%Y-%m-%dT%H:%M')
+
+    if request.method == 'POST':
+        return process_checkout(request, cart_items, cart_total, settings)
+
+    context = {
+        'settings': settings,
+        'cart_items': cart_items,
+        'cart_total': cart_total,
+        'min_delivery_date': min_delivery_date,
+    }
+
+    return render(request, 'checkout.html', context)
 
 
 def contact_submit(request):
@@ -177,40 +230,165 @@ def contact_submit(request):
     return redirect('contact')
 
 
-def cart(request):
-    """Cart page view"""
-    if request.user.is_authenticated:
-        cart_items = CartItem.objects.filter(user=request.user)
-        subtotal = sum(item.get_total_price() for item in cart_items)
-        shipping = 5.00 if subtotal > 0 else 0
-        total = subtotal + shipping
-    else:
-        # Handle session-based cart for anonymous users
-        cart = request.session.get('cart', {})
-        cart_items = []
-        for product_id, quantity in cart.items():
-            try:
-                product = Product.objects.get(id=product_id)
-                cart_items.append({
-                    'product': product,
-                    'quantity': quantity,
-                    'total_price': product.price * quantity
-                })
-            except Product.DoesNotExist:
-                continue
+# Add or update your cart view in views.py
 
-        subtotal = sum(item['total_price'] for item in cart_items)
-        shipping = 5.00 if subtotal > 0 else 0
-        total = subtotal + shipping
+def cart(request):
+    """Display user's cart"""
+    settings = SiteSettings.objects.first()
+    if not settings:
+        settings = SiteSettings()  # Use defaults if no settings exist
+
+    cart_items = []
+    cart_total = 0
+
+    if request.user.is_authenticated:
+        # Get cart items for authenticated users
+        cart_items = CartItem.objects.filter(user=request.user).select_related('product')
+        cart_total = sum(item.get_total_price() for item in cart_items)
+    else:
+        # For anonymous users, you can implement session-based cart here
+        # For now, show empty cart with login prompt
+        messages.info(request, 'Please log in to view your cart or add items.')
 
     context = {
-        'site_settings': SiteSettings.objects.first(),
+        'settings': settings,
         'cart_items': cart_items,
-        'subtotal': subtotal,
-        'shipping': shipping,
-        'total': total,
+        'cart_total': cart_total,
     }
+
     return render(request, 'base/cart.html', context)
+
+
+# Add these imports to your existing views.py
+
+
+# Custom forms for better validation and styling
+class CustomUserCreationForm(UserCreationForm):
+    email = forms.EmailField(required=True)
+
+    class Meta:
+        model = User
+        fields = ("username", "email", "password1", "password2")
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        # Add CSS classes for styling
+        for field_name in self.fields:
+            self.fields[field_name].widget.attrs.update({'class': 'form-control'})
+
+        # Customize help text
+        self.fields['password1'].help_text = None
+        self.fields['password2'].help_text = None
+        self.fields['username'].help_text = None
+
+    def save(self, commit=True):
+        user = super().save(commit=False)
+        user.email = self.cleaned_data["email"]
+        if commit:
+            user.save()
+        return user
+
+
+class CustomAuthenticationForm(AuthenticationForm):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        # Add CSS classes for styling
+        for field_name in self.fields:
+            self.fields[field_name].widget.attrs.update({'class': 'form-control'})
+
+
+# Authentication view
+def authenticate_view(request):
+    """Handle both login and signup"""
+    settings = SiteSettings.objects.first() or SiteSettings()
+
+    login_form = CustomAuthenticationForm()
+    signup_form = CustomUserCreationForm()
+
+    if request.method == 'POST':
+        form_type = request.POST.get('form_type')
+
+        if form_type == 'login':
+            login_form = CustomAuthenticationForm(data=request.POST)
+            if login_form.is_valid():
+                username = login_form.cleaned_data.get('username')
+                password = login_form.cleaned_data.get('password')
+                user = authenticate(username=username, password=password)
+
+                if user is not None:
+                    login(request, user)
+                    messages.success(request, f'Welcome back, {user.username}!')
+
+                    # Redirect to next URL or cart/home
+                    next_url = request.GET.get('next')
+                    if next_url:
+                        return redirect(next_url)
+                    elif CartItem.objects.filter(user=user).exists():
+                        return redirect('cart')
+                    else:
+                        return redirect('home')
+                else:
+                    messages.error(request, 'Invalid username or password.')
+            else:
+                messages.error(request, 'Please correct the errors below.')
+
+        elif form_type == 'signup':
+            signup_form = CustomUserCreationForm(request.POST)
+            if signup_form.is_valid():
+                user = signup_form.save()
+                username = signup_form.cleaned_data.get('username')
+                messages.success(request, f'Account created successfully for {username}!')
+
+                # Auto-login the new user
+                login(request, user)
+
+                # Redirect to next URL or home
+                next_url = request.GET.get('next')
+                if next_url:
+                    return redirect(next_url)
+                else:
+                    return redirect('home')
+            else:
+                messages.error(request, 'Please correct the errors below.')
+
+    context = {
+        'settings': settings,
+        'login_form': login_form,
+        'signup_form': signup_form,
+    }
+
+    return render(request, 'authenticate.html', context)
+
+
+# Logout view
+def logout_view(request):
+    """Handle user logout"""
+    if request.user.is_authenticated:
+        username = request.user.username
+        logout(request)
+        messages.success(request, f'Goodbye {username}! You have been logged out.')
+
+    return redirect('home')
+
+
+# Profile view (optional)
+@login_required
+def profile_view(request):
+    """User profile page"""
+    settings = SiteSettings.objects.first() or SiteSettings()
+
+    # Get user's recent orders
+    recent_orders = Order.objects.filter(
+        customer_email=request.user.email
+    ).order_by('-created_at')[:5]
+
+    context = {
+        'settings': settings,
+        'user': request.user,
+        'recent_orders': recent_orders,
+    }
+
+    return render(request, 'profile.html', context)
 
 
 def newsletter_subscribe(request):
@@ -264,7 +442,118 @@ def tests(request):
     return render(request, 'base/tests.html')
 
 
+# Add this to your existing views.py
+
+
+def process_checkout(request, cart_items, cart_total, settings):
+    """Process the checkout form submission"""
+
+    if not cart_items:
+        messages.error(request, 'Your cart is empty.')
+        return redirect('cart')
+
+    try:
+        # Get form data
+        customer_name = request.POST.get('customer_name', '').strip()
+        customer_email = request.POST.get('customer_email', '').strip()
+        customer_phone = request.POST.get('customer_phone', '').strip()
+        delivery_date_str = request.POST.get('delivery_date', '').strip()
+        delivery_address = request.POST.get('delivery_address', '').strip()
+        special_instructions = request.POST.get('special_instructions', '').strip()
+
+        # Validate required fields
+        if not all([customer_name, customer_email, customer_phone, delivery_date_str]):
+            messages.error(request, 'Please fill in all required fields.')
+            return redirect('checkout')
+
+        # Parse delivery date
+        try:
+            delivery_date = datetime.strptime(delivery_date_str, '%Y-%m-%dT%H:%M')
+            delivery_date = timezone.make_aware(delivery_date)
+        except ValueError:
+            messages.error(request, 'Invalid delivery date format.')
+            return redirect('checkout')
+
+        # Check if delivery date is far enough in the future
+        notice_hours = 24  # Default
+        try:
+            if settings.minimum_order_notice:
+                notice_text = settings.minimum_order_notice.lower()
+                if 'hour' in notice_text:
+                    notice_hours = int(''.join(filter(str.isdigit, notice_text))) or 24
+                elif 'day' in notice_text:
+                    notice_hours = (int(''.join(filter(str.isdigit, notice_text))) or 1) * 24
+        except:
+            notice_hours = 24
+
+        min_delivery_time = timezone.now() + timedelta(hours=notice_hours)
+        if delivery_date < min_delivery_time:
+            messages.error(request, f'Delivery date must be at least {settings.minimum_order_notice} from now.')
+            return redirect('checkout')
+
+        # Create order in a transaction
+        with transaction.atomic():
+            # Generate unique order number
+            order_number = f"ORD-{timezone.now().strftime('%Y%m%d')}-{str(uuid.uuid4())[:8].upper()}"
+
+            # Create the order
+            order = Order.objects.create(
+                order_number=order_number,
+                customer_name=customer_name,
+                customer_email=customer_email,
+                customer_phone=customer_phone,
+                total_amount=cart_total,
+                delivery_date=delivery_date,
+                delivery_address=delivery_address,
+                special_instructions=special_instructions,
+                status='pending'
+            )
+
+            # Create order items
+            for cart_item in cart_items:
+                OrderItem.objects.create(
+                    order=order,
+                    product=cart_item.product,
+                    quantity=cart_item.quantity,
+                    unit_price=cart_item.product.price,
+                    customization_notes=''  # You can add this field to cart if needed
+                )
+
+                # Update stock if you want to track inventory
+                # cart_item.product.stock_quantity -= cart_item.quantity
+                # cart_item.product.save()
+
+            # Clear the cart
+            cart_items.delete()
+
+            messages.success(
+                request,
+                f'Order placed successfully! Your order number is {order_number}. '
+                f'We will contact you at {customer_phone} to confirm your order.'
+            )
+
+            # Redirect to order confirmation or home page
+            return redirect('order_confirmation', order_number=order_number)
+
+    except Exception as e:
+        messages.error(request, 'An error occurred while processing your order. Please try again.')
+        return redirect('checkout')
+
+
+def order_confirmation(request, order_number):
+    """Order confirmation page"""
+    order = get_object_or_404(Order, order_number=order_number)
+    settings = SiteSettings.objects.first() or SiteSettings()
+
+    context = {
+        'order': order,
+        'settings': settings,
+    }
+
+    return render(request, 'order_confirmation.html', context)
+
 # API ViewSets (keep existing ones)
+
 
 class CategoryViewSet(viewsets.ModelViewSet):
     """

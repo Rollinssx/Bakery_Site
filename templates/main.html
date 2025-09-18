@@ -23,11 +23,16 @@
     <link rel="stylesheet" href="{% static 'styles/contact.css' %}">
     <link rel="stylesheet" href="{% static 'styles/products.css' %}">
     <link rel="stylesheet" href="{% static 'styles/cart.css' %}">
+    <link rel="stylesheet" href="{% static 'styles/checkout.css' %}">
+    <link rel="stylesheet" href="{% static 'styles/order_confirmation.css' %}">
+
 
     <title>{% block title %} {% endblock title %} - {{ site_settings.business_name|default:"Pastries with Love" }}</title>
     <meta name="description" content="{{ site_settings.site_description|default:"Premium bakery in Nairobi offering custom cakes, pastries, and desserts for all occasions." }}">
 
 </head>
+<!-- Update your main navigation template to include dynamic auth links -->
+
 {% block content %}
 
 

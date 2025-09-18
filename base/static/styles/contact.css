@@ -18,7 +18,7 @@ body {
 
 /* Header */
 .header {
-    background: var(--primary-purple);
+    background: var(--dark-purple);
     color: white;
     padding: 1rem 0;
 }
@@ -46,7 +46,7 @@ body {
 
 .cart-icon {
     background: white;
-    color: var(--primary-purple);
+    color: var(--dark-purple);
     border-radius: 50%;
     width: 40px;
     height: 40px;
@@ -58,7 +58,7 @@ body {
 
 /* Hero Section */
 .hero-section {
-    background: var(--primary-purple);
+    background: var(--dark-purple);
     color: white;
     padding: 4rem 0;
     text-align: center;
@@ -98,7 +98,7 @@ body {
 .contact-icon {
     width: 60px;
     height: 60px;
-    background: var(--light-purple);
+    background: var(--dark-purple);
     border-radius: 50%;
     display: flex;
     align-items: center;
@@ -179,51 +179,6 @@ body {
     justify-content: center;
     color: #6c757d;
     font-size: 1.2rem;
-}
-
-/* Footer */
-.footer {
-    background: var(--dark-purple);
-    color: white;
-    padding: 3rem 0 1rem;
-}
-
-.footer h5 {
-    font-family: 'Magnolia Script', cursive;
-    font-size: 1.8rem;
-    margin-bottom: 1rem;
-}
-
-.footer p, .footer a {
-    color: rgba(255,255,255,0.8);
-    text-decoration: none;
-}
-
-.footer a:hover {
-    color: white;
-}
-
-.social-icons a {
-    display: inline-block;
-    width: 40px;
-    height: 40px;
-    background: rgba(255,255,255,0.1);
-    border-radius: 50%;
-    text-align: center;
-    line-height: 40px;
-    margin-right: 10px;
-    transition: background-color 0.3s;
-}
-
-.social-icons a:hover {
-    background: rgba(255,255,255,0.2);
-}
-
-.footer-bottom {
-    border-top: 1px solid rgba(255,255,255,0.1);
-    margin-top: 2rem;
-    padding-top: 2rem;
-    text-align: center;
 }
 
 /* Responsive */

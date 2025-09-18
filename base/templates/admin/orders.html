@@ -1,0 +1,454 @@
+<!doctype html>
+{% load static %}
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Orders Management - Admin Dashboard</title>
+
+    <!-- Bootstrap & Fonts -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&family=Schoolbell&display=swap" rel="stylesheet">
+    <link href="https://fonts.cdnfonts.com/css/magnolia-script" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="{% static 'styles/admin_dashboard.css' %}">
+</head>
+<body>
+    <!-- Sidebar -->
+    <div class="sidebar" id="sidebar">
+        <div class="sidebar-header">
+            <h3>{{ site_settings.business_name|default:"Sweet Delights" }}</h3>
+            <p>Admin Dashboard</p>
+        </div>
+
+        <nav class="sidebar-menu">
+            <a href="{% url 'admin_dashboard' %}" class="menu-item active">
+                <i class="fas fa-chart-bar"></i>
+                Dashboard
+            </a>
+            <a href="{% url 'admin_orders' %}" class="menu-item">
+                <i class="fas fa-shopping-cart"></i>
+                Orders
+            </a>
+            <a href="{% url 'admin_products' %}" class="menu-item">
+                <i class="fas fa-box"></i>
+                Products
+            </a>
+            <a href="{% url 'admin_customers' %}" class="menu-item">
+                <i class="fas fa-users"></i>
+                Customers
+            </a>
+            <a href="{% url 'admin_messages' %}" class="menu-item">
+                <i class="fas fa-envelope"></i>
+                Messages
+            </a>
+            <a href="{% url 'admin_settings' %}" class="menu-item">
+                <i class="fas fa-cog"></i>
+                Settings
+            </a>
+            <a href="{% url 'home' %}" class="menu-item">
+                <i class="fas fa-home"></i>
+                View Site
+            </a>
+        </nav>
+    </div>
+
+    <!-- Main Content -->
+    <div class="main-content">
+        <!-- Page Header -->
+        <div class="page-header">
+            <button class="btn btn-primary d-md-none mb-2" onclick="toggleSidebar()">
+                <i class="fas fa-bars"></i> Menu
+            </button>
+            <h1>Orders Management</h1>
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb">
+                    <li class="breadcrumb-item"><a href="#">Dashboard</a></li>
+                    <li class="breadcrumb-item active">Orders</li>
+                </ol>
+            </nav>
+        </div>
+
+        <!-- Stats Cards -->
+        <div class="row stats-row">
+            <div class="col-lg-3 col-md-6 mb-3">
+                <div class="stat-card pending">
+                    <div class="stat-number text-warning">{{ stats.pending_orders|default:"12" }}</div>
+                    <div class="stat-label">Pending Orders</div>
+                    <i class="fas fa-clock stat-icon"></i>
+                </div>
+            </div>
+            <div class="col-lg-3 col-md-6 mb-3">
+                <div class="stat-card confirmed">
+                    <div class="stat-number text-info">{{ stats.confirmed_orders|default:"8" }}</div>
+                    <div class="stat-label">Confirmed Orders</div>
+                    <i class="fas fa-check-circle stat-icon"></i>
+                </div>
+            </div>
+            <div class="col-lg-3 col-md-6 mb-3">
+                <div class="stat-card completed">
+                    <div class="stat-number text-success">{{ stats.completed_orders|default:"156" }}</div>
+                    <div class="stat-label">Completed Orders</div>
+                    <i class="fas fa-trophy stat-icon"></i>
+                </div>
+            </div>
+            <div class="col-lg-3 col-md-6 mb-3">
+                <div class="stat-card revenue">
+                    <div class="stat-number" style="color: var(--primary-purple)">KES {{ stats.total_revenue|default:"245,600"|floatformat:0 }}</div>
+                    <div class="stat-label">Total Revenue</div>
+                    <i class="fas fa-money-bill-wave stat-icon"></i>
+                </div>
+            </div>
+        </div>
+
+        <!-- Orders Table -->
+        <div class="orders-container">
+            <div class="orders-header">
+                <h3>Recent Orders</h3>
+                <div class="filter-controls">
+                    <input type="text" class="search-input" placeholder="Search orders..." id="searchInput">
+                    <select class="filter-select" id="statusFilter">
+                        <option value="">All Status</option>
+                        <option value="pending">Pending</option>
+                        <option value="confirmed">Confirmed</option>
+                        <option value="in_progress">In Progress</option>
+                        <option value="ready">Ready</option>
+                        <option value="completed">Completed</option>
+                        <option value="cancelled">Cancelled</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="table-responsive">
+                <table class="table orders-table">
+                    <thead>
+                        <tr>
+                            <th>Order #</th>
+                            <th>Customer</th>
+                            <th>Items</th>
+                            <th>Total</th>
+                            <th>Status</th>
+                            <th>Date</th>
+                            <th>Delivery</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for order in orders %}
+                        <tr>
+                            <td><strong>{{ order.order_number }}</strong></td>
+                            <td>
+                                <div>{{ order.customer_name }}</div>
+                                <small class="text-muted">{{ order.customer_email }}</small>
+                            </td>
+                            <td>{{ order.items.count }} items</td>
+                            <td><strong>{{ order.total_amount|floatformat:2 }}</strong></td>
+                            <td>
+                                <span class="status-badge status-{{ order.status }}">
+                                    {{ order.get_status_display }}
+                                </span>
+                            </td>
+                            <td>{{ order.created_at|date:"M d, Y" }}<br><small>{{ order.created_at|time:"H:i" }}</small></td>
+                            <td>
+                                {% if order.is_delivery %}
+                                    <i class="fas fa-truck text-info"></i> Delivery
+                                {% else %}
+                                    <i class="fas fa-store text-success"></i> Pickup
+                                {% endif %}
+                                <br><small>{{ order.delivery_date|date:"M d" }}</small>
+                            </td>
+                            <td>
+                                <button class="action-btn btn-view" onclick="viewOrder({{ order.id }})">
+                                    <i class="fas fa-eye"></i>
+                                </button>
+                                {% if order.status == 'pending' %}
+                                <button class="action-btn btn-edit" onclick="confirmOrder({{ order.id }})">
+                                    <i class="fas fa-check"></i>
+                                </button>
+                                {% endif %}
+                                {% if order.status == 'confirmed' or order.status == 'in_progress' %}
+                                <button class="action-btn btn-complete" onclick="completeOrder({{ order.id }})">
+                                    <i class="fas fa-flag-checkered"></i>
+                                </button>
+                                {% endif %}
+                                <button class="action-btn btn-cancel" onclick="cancelOrder({{ order.id }})">
+                                    <i class="fas fa-times"></i>
+                                </button>
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="8" class="text-center py-4">
+                                <i class="fas fa-inbox fa-3x text-muted mb-3"></i>
+                                <p class="text-muted">No orders found</p>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Pagination -->
+            {% if orders.has_other_pages %}
+            <nav aria-label="Orders pagination">
+                <ul class="pagination">
+                    {% if orders.has_previous %}
+                        <li class="page-item">
+                            <a class="page-link" href="?page={{ orders.previous_page_number }}">Previous</a>
+                        </li>
+                    {% endif %}
+
+                    {% for num in orders.paginator.page_range %}
+                        {% if orders.number == num %}
+                            <li class="page-item active">
+                                <span class="page-link">{{ num }}</span>
+                            </li>
+                        {% elif num > orders.number|add:'-3' and num < orders.number|add:'3' %}
+                            <li class="page-item">
+                                <a class="page-link" href="?page={{ num }}">{{ num }}</a>
+                            </li>
+                        {% endif %}
+                    {% endfor %}
+
+                    {% if orders.has_next %}
+                        <li class="page-item">
+                            <a class="page-link" href="?page={{ orders.next_page_number }}">Next</a>
+                        </li>
+                    {% endif %}
+                </ul>
+            </nav>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Order Details Modal -->
+    <div class="modal fade" id="orderModal" tabindex="-1">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Order Details</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body" id="orderModalBody">
+                    <!-- Order details will be loaded here -->
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                    <button type="button" class="btn btn-primary" onclick="printOrder()">Print Order</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+
+    <script>
+        // Toggle sidebar on mobile
+        function toggleSidebar() {
+            const sidebar = document.getElementById('sidebar');
+            sidebar.classList.toggle('show');
+        }
+
+        // Close sidebar when clicking outside on mobile
+        document.addEventListener('click', function(e) {
+            const sidebar = document.getElementById('sidebar');
+            const toggleBtn = e.target.closest('.btn');
+
+            if (!sidebar.contains(e.target) && !toggleBtn && sidebar.classList.contains('show')) {
+                sidebar.classList.remove('show');
+            }
+        });
+
+        // Search functionality
+        document.getElementById('searchInput').addEventListener('input', function() {
+            const searchTerm = this.value.toLowerCase();
+            const rows = document.querySelectorAll('.orders-table tbody tr');
+
+            rows.forEach(row => {
+                const text = row.textContent.toLowerCase();
+                row.style.display = text.includes(searchTerm) ? '' : 'none';
+            });
+        });
+
+        // Status filter
+        document.getElementById('statusFilter').addEventListener('change', function() {
+            const status = this.value;
+            const rows = document.querySelectorAll('.orders-table tbody tr');
+
+            rows.forEach(row => {
+                if (status === '') {
+                    row.style.display = '';
+                } else {
+                    const statusBadge = row.querySelector('.status-badge');
+                    if (statusBadge && statusBadge.classList.contains(`status-${status}`)) {
+                        row.style.display = '';
+                    } else {
+                        row.style.display = 'none';
+                    }
+                }
+            });
+        });
+
+        // Order actions
+        function viewOrder(orderId) {
+            // Fetch order details and show in modal
+            fetch(`/api/orders/${orderId}/`)
+                .then(response => response.json())
+                .then(data => {
+                    displayOrderDetails(data);
+                    const modal = new bootstrap.Modal(document.getElementById('orderModal'));
+                    modal.show();
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    alert('Error loading order details');
+                });
+        }
+
+        function displayOrderDetails(order) {
+            const modalBody = document.getElementById('orderModalBody');
+
+            let itemsHtml = '';
+            if (order.items && order.items.length > 0) {
+                itemsHtml = `
+                    <h6>Order Items</h6>
+                    <table class="table order-items-table">
+                        <thead>
+                            <tr>
+                                <th>Product</th>
+                                <th>Quantity</th>
+                                <th>Unit Price</th>
+                                <th>Total</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                `;
+
+                order.items.forEach(item => {
+                    itemsHtml += `
+                        <tr>
+                            <td>${item.product_name}</td>
+                            <td>${item.quantity}</td>
+                            <td>KES ${item.unit_price}</td>
+                            <td>KES ${(item.quantity * item.unit_price).toFixed(2)}</td>
+                        </tr>
+                    `;
+                });
+
+                itemsHtml += '</tbody></table>';
+            }
+
+            modalBody.innerHTML = `
+                <div class="row">
+                    <div class="col-md-6">
+                        <h6>Order Information</h6>
+                        <div class="order-detail-item">
+                            <strong>Order Number:</strong>
+                            <span>${order.order_number}</span>
+                        </div>
+                        <div class="order-detail-item">
+                            <strong>Status:</strong>
+                            <span class="status-badge status-${order.status}">${order.status}</span>
+                        </div>
+                        <div class="order-detail-item">
+                            <strong>Order Date:</strong>
+                            <span>${new Date(order.created_at).toLocaleDateString()}</span>
+                        </div>
+                        <div class="order-detail-item">
+                            <strong>Delivery Date:</strong>
+                            <span>${new Date(order.delivery_date).toLocaleDateString()}</span>
+                        </div>
+                        <div class="order-detail-item">
+                            <strong>Total Amount:</strong>
+                            <span><strong>KES ${order.total_amount}</strong></span>
+                        </div>
+                    </div>
+
+                    <div class="col-md-6">
+                        <h6>Customer Information</h6>
+                        <div class="order-detail-item">
+                            <strong>Name:</strong>
+                            <span>${order.customer_name}</span>
+                        </div>
+                        <div class="order-detail-item">
+                            <strong>Email:</strong>
+                            <span>${order.customer_email}</span>
+                        </div>
+                        <div class="order-detail-item">
+                            <strong>Phone:</strong>
+                            <span>${order.customer_phone}</span>
+                        </div>
+                        <div class="order-detail-item">
+                            <strong>Delivery:</strong>
+                            <span>${order.delivery_address ? 'Delivery' : 'Pickup'}</span>
+                        </div>
+                        ${order.delivery_address ? `
+                        <div class="order-detail-item">
+                            <strong>Address:</strong>
+                            <span>${order.delivery_address}</span>
+                        </div>
+                        ` : ''}
+                    </div>
+                </div>
+
+                ${order.special_instructions ? `
+                <div class="mt-3">
+                    <h6>Special Instructions</h6>
+                    <p class="text-muted">${order.special_instructions}</p>
+                </div>
+                ` : ''}
+
+                ${itemsHtml}
+            `;
+        }
+
+        function confirmOrder(orderId) {
+            if (confirm('Confirm this order?')) {
+                updateOrderStatus(orderId, 'confirmed');
+            }
+        }
+
+        function completeOrder(orderId) {
+            if (confirm('Mark this order as completed?')) {
+                updateOrderStatus(orderId, 'completed');
+            }
+        }
+
+        function cancelOrder(orderId) {
+            if (confirm('Are you sure you want to cancel this order?')) {
+                updateOrderStatus(orderId, 'cancelled');
+            }
+        }
+
+        function updateOrderStatus(orderId, status) {
+            fetch(`/api/orders/${orderId}/`, {
+                method: 'PATCH',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]')?.value || '',
+                },
+                body: JSON.stringify({ status: status })
+            })
+            .then(response => response.json())
+            .then(data => {
+                location.reload(); // Reload to show updated status
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('Error updating order status');
+            });
+        }
+
+        function printOrder() {
+            window.print();
+        }
+
+        // Auto-refresh every 30 seconds for new orders
+        setInterval(() => {
+            // You can implement auto-refresh logic here
+            // location.reload();
+        }, 30000);
+    </script>
+</body>
+</html>

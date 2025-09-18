@@ -2,7 +2,7 @@
 from django.urls import path, include
 from rest_framework.routers import DefaultRouter
 from . import views
-from . import views, cart_views
+from . import views, cart_views, admin_views, admin_urls
 
 # API Router for ViewSets
 router = DefaultRouter()
@@ -28,6 +28,29 @@ urlpatterns = [
     path('cart/', views.cart, name='cart'),
     path('tests/', views.tests, name='tests'),
 
+    # Checkout and order URLs
+    path('checkout/', views.checkout, name='checkout'),
+    path('order/confirmation/<str:order_number>/', views.order_confirmation, name='order_confirmation'),
+
+    # Authentication URLs
+    path('account/', views.authenticate_view, name='authenticate'),
+    path('login/', views.authenticate_view, name='login'),
+    path('signup/', views.authenticate_view, name='signup'),
+    path('logout/', views.logout_view, name='logout'),
+    path('profile/', views.profile_view, name='profile'),  # Optional
+
+    # Admin Panel URLs
+    path('admin-panel/', include(admin_urls, namespace='admin')),
+    path('admin-panel/', admin_views.admin_dashboard, name='admin_dashboard'),
+    path('admin-panel/orders/', admin_views.admin_orders, name='admin_orders'),
+    path('admin-panel/orders/<int:order_id>/', admin_views.admin_order_detail, name='admin_order_detail'),
+    path('admin-panel/orders/<int:order_id>/update/', admin_views.admin_update_order_status,
+         name='admin_update_order_status'),
+    path('admin-panel/products/', admin_views.admin_products, name='admin_products'),
+    path('admin-panel/customers/', admin_views.admin_customers, name='admin_customers'),
+    path('admin-panel/messages/', admin_views.admin_messages, name='admin_messages'),
+    path('admin-panel/settings/', admin_views.admin_settings, name='admin_settings'),
+
     # Cart AJAX operations
     path('cart/add/<int:product_id>/', cart_views.add_to_cart, name='add_to_cart'),
     path('cart/update/<int:product_id>/', cart_views.update_cart_quantity, name='update_cart_quantity'),
@@ -35,7 +58,6 @@ urlpatterns = [
     path('cart/count/', cart_views.cart_count, name='cart_count'),
 
     # Additional pages (add as needed)
-    path('checkout/', views.checkout, name='checkout'),
 
     # API endpoints
     path('api/', include(router.urls)),

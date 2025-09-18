@@ -9,6 +9,17 @@
     <header>
         <div class="products-container products-navbar">
             <a href="{% url 'home' %}" class="products-logo">{{ site_settings.business_name|default:"Sweet Delights" }}</a>
+                <a href="{% url 'cart' %}" class="cart-icon">
+                    <svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px" fill="#000000">
+                        <path d="M280-80q-33 0-56.5-23.5T200-160q0-33 23.5-56.5T280-240q33 0 56.5 23.5T360-160q0 33-23.5 56.5T280-80Zm400 0q-33 0-56.5-23.5T600-160q0-33 23.5-56.5T680-240q33 0 56.5 23.5T760-160q0 33-23.5 56.5T680-80ZM246-720l96 200h280l110-200H246Zm-38-80h590q23 0 35 20.5t1 41.5L692-482q-11 20-29.5 31T622-440H324l-44 80h480v80H280q-45 0-68-39.5t-2-78.5l54-98-144-304H40v-80h130l38 80Zm134 280h280-280Z"/>
+                    </svg>
+                </a>
+            <div class="search-container">
+                <input type="text" id="products-search-bar" placeholder="Search products...">
+                <svg class="search-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+                    <path d="M15.5 14h-.79l-.28-.27A6.471 6.471 0 0 0 16 9.5 6.5 6.5 0 1 0 9.5 16a6.471 6.471 0 0 0 3.73-1.28l.27.28v.79l5 4.99L20.49 19l-4.99-5zM9.5 14C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z" />
+                </svg>
+            </div>
             <nav class="products-nav-links">
                 <a href="{% url 'home' %}" class="products-nav-link">Home</a>
                 <a href="{% url 'products' %}" class="products-nav-link">Products</a>
@@ -23,16 +34,6 @@
         <div class="products-container">
             <h1>Our Delicious Creations</h1>
             <p>From classic cakes to artisan breads, find your next favorite treat.</p>
-        </div>
-    </section>
-
-    <!-- Search Bar -->
-    <section class="products-search-section">
-        <div class="products-container">
-            <form method="get" class="search-form">
-                <input type="text" name="search" placeholder="Search products..." value="{{ search_query }}" class="search-input">
-                <button type="submit" class="search-btn">Search</button>
-            </form>
         </div>
     </section>
 

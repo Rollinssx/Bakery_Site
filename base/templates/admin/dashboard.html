@@ -1,0 +1,500 @@
+<!doctype html>
+{% load static %}
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Admin Dashboard - {{ site_settings.business_name|default:"Sweet Delights" }}</title>
+
+    <!-- Bootstrap & Fonts -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&family=Schoolbell&display=swap" rel="stylesheet">
+    <link href="https://fonts.cdnfonts.com/css/magnolia-script" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/chart.js@3.9.1/dist/chart.min.js">
+
+    <style>
+        :root {
+            --primary-purple: #8B5A96;
+            --dark-purple: rgb(98, 53, 123);
+            --light-purple: rgb(240, 214, 255);
+            --grey-purple: rgb(155, 125, 166);
+            --success-green: #28a745;
+            --warning-yellow: #ffc107;
+            --danger-red: #dc3545;
+            --info-blue: #17a2b8;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Poppins', sans-serif;
+            background-color: #f8f9fa;
+        }
+
+        /* Sidebar */
+        .sidebar {
+            background: var(--dark-purple);
+            color: white;
+            min-height: 100vh;
+            width: 280px;
+            position: fixed;
+            left: 0;
+            top: 0;
+            z-index: 1000;
+            overflow-y: auto;
+        }
+
+        .sidebar-header {
+            padding: 2rem 1.5rem;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+        }
+
+        .sidebar-header h3 {
+            font-family: 'Magnolia Script', cursive;
+            font-size: 2rem;
+            margin: 0;
+        }
+
+        .sidebar-header p {
+            font-size: 0.9rem;
+            opacity: 0.8;
+            margin: 0;
+        }
+
+        .sidebar-menu {
+            padding: 1rem 0;
+        }
+
+        .sidebar-menu .menu-item {
+            display: block;
+            padding: 1rem 1.5rem;
+            color: rgba(255,255,255,0.8);
+            text-decoration: none;
+            transition: all 0.3s;
+        }
+
+        .sidebar-menu .menu-item:hover,
+        .sidebar-menu .menu-item.active {
+            background: rgba(255,255,255,0.1);
+            color: white;
+            transform: translateX(5px);
+        }
+
+        .sidebar-menu .menu-item i {
+            margin-right: 10px;
+            width: 20px;
+        }
+
+        /* Main Content */
+        .main-content {
+            margin-left: 280px;
+            padding: 2rem;
+        }
+
+        .page-header {
+            background: white;
+            padding: 1.5rem 2rem;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            margin-bottom: 2rem;
+        }
+
+        .page-header h1 {
+            font-size: 2rem;
+            color: var(--dark-purple);
+            margin: 0;
+        }
+
+        /* Stats Cards */
+        .stats-row {
+            margin-bottom: 2rem;
+        }
+
+        .stat-card {
+            background: white;
+            border-radius: 10px;
+            padding: 1.5rem;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            border-left: 4px solid;
+            transition: transform 0.3s;
+            height: 120px;
+        }
+
+        .stat-card:hover {
+            transform: translateY(-2px);
+        }
+
+        .stat-card.orders { border-left-color: var(--info-blue); }
+        .stat-card.revenue { border-left-color: var(--success-green); }
+        .stat-card.products { border-left-color: var(--warning-yellow); }
+        .stat-card.customers { border-left-color: var(--primary-purple); }
+
+        .stat-number {
+            font-size: 2rem;
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+        }
+
+        .stat-label {
+            color: #6c757d;
+            font-size: 0.9rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .stat-icon {
+            font-size: 2.5rem;
+            opacity: 0.3;
+            float: right;
+            margin-top: -1rem;
+        }
+
+        /* Chart Container */
+        .chart-container {
+            background: white;
+            border-radius: 10px;
+            padding: 1.5rem;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            margin-bottom: 2rem;
+        }
+
+        /* Recent Orders */
+        .recent-orders {
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+
+        .recent-orders-header {
+            padding: 1.5rem 2rem;
+            background: var(--light-purple);
+            border-bottom: 1px solid #e9ecef;
+        }
+
+        .recent-orders h3 {
+            margin: 0;
+            color: var(--dark-purple);
+        }
+
+        .order-item {
+            padding: 1rem 2rem;
+            border-bottom: 1px solid #e9ecef;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .order-item:last-child {
+            border-bottom: none;
+        }
+
+        .order-info h6 {
+            margin: 0;
+            color: var(--dark-purple);
+        }
+
+        .order-info small {
+            color: #6c757d;
+        }
+
+        .order-status {
+            padding: 0.25rem 0.5rem;
+            border-radius: 12px;
+            font-size: 0.8rem;
+            font-weight: 500;
+        }
+
+        .status-pending { background: #fff3cd; color: #856404; }
+        .status-confirmed { background: #d1ecf1; color: #0c5460; }
+        .status-completed { background: #d4edda; color: #155724; }
+
+        /* Quick Actions */
+        .quick-actions {
+            background: white;
+            border-radius: 10px;
+            padding: 1.5rem;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+
+        .action-btn {
+            display: block;
+            width: 100%;
+            padding: 1rem;
+            margin-bottom: 0.5rem;
+            background: var(--light-purple);
+            color: var(--dark-purple);
+            text-decoration: none;
+            border-radius: 8px;
+            transition: all 0.3s;
+            border: none;
+        }
+
+        .action-btn:hover {
+            background: var(--dark-purple);
+            color: white;
+            transform: translateY(-1px);
+        }
+
+        .action-btn i {
+            margin-right: 10px;
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .sidebar {
+                transform: translateX(-100%);
+                transition: transform 0.3s;
+            }
+
+            .sidebar.show {
+                transform: translateX(0);
+            }
+
+            .main-content {
+                margin-left: 0;
+                padding: 1rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Sidebar -->
+    <div class="sidebar" id="sidebar">
+        <div class="sidebar-header">
+            <h3>{{ site_settings.business_name|default:"Sweet Delights" }}</h3>
+            <p>Admin Dashboard</p>
+        </div>
+
+        <nav class="sidebar-menu">
+            <a href="{% url 'admin_dashboard' %}" class="menu-item active">
+                <i class="fas fa-chart-bar"></i>
+                Dashboard
+            </a>
+            <a href="{% url 'admin_orders' %}" class="menu-item">
+                <i class="fas fa-shopping-cart"></i>
+                Orders
+            </a>
+            <a href="{% url 'admin_products' %}" class="menu-item">
+                <i class="fas fa-box"></i>
+                Products
+            </a>
+            <a href="{% url 'admin_customers' %}" class="menu-item">
+                <i class="fas fa-users"></i>
+                Customers
+            </a>
+            <a href="{% url 'admin_messages' %}" class="menu-item">
+                <i class="fas fa-envelope"></i>
+                Messages
+            </a>
+            <a href="{% url 'admin_settings' %}" class="menu-item">
+                <i class="fas fa-cog"></i>
+                Settings
+            </a>
+            <a href="{% url 'home' %}" class="menu-item">
+                <i class="fas fa-home"></i>
+                View Site
+            </a>
+        </nav>
+    </div>
+
+    <!-- Main Content -->
+    <div class="main-content">
+        <!-- Page Header -->
+        <div class="page-header">
+            <button class="btn btn-primary d-md-none mb-2" onclick="toggleSidebar()">
+                <i class="fas fa-bars"></i> Menu
+            </button>
+            <h1>Dashboard Overview</h1>
+            <p class="mb-0 text-muted">Welcome back! Here's what's happening with your bakery today.</p>
+        </div>
+
+        <!-- Stats Cards -->
+        <div class="row stats-row">
+            <div class="col-lg-3 col-md-6 mb-3">
+                <div class="stat-card orders">
+                    <div class="stat-number text-info">{{ stats.total_orders|default:"24" }}</div>
+                    <div class="stat-label">Total Orders</div>
+                    <i class="fas fa-shopping-cart stat-icon"></i>
+                </div>
+            </div>
+            <div class="col-lg-3 col-md-6 mb-3">
+                <div class="stat-card revenue">
+                    <div class="stat-number text-success">KES {{ stats.total_revenue|default:"156,800"|floatformat:0 }}</div>
+                    <div class="stat-label">Total Revenue</div>
+                    <i class="fas fa-money-bill-wave stat-icon"></i>
+                </div>
+            </div>
+            <div class="col-lg-3 col-md-6 mb-3">
+                <div class="stat-card products">
+                    <div class="stat-number text-warning">{{ stats.active_products|default:"45" }}</div>
+                    <div class="stat-label">Active Products</div>
+                    <i class="fas fa-box stat-icon"></i>
+                </div>
+            </div>
+            <div class="col-lg-3 col-md-6 mb-3">
+                <div class="stat-card customers">
+                    <div class="stat-number" style="color: var(--primary-purple)">{{ stats.newsletter_subscribers|default:"234" }}</div>
+                    <div class="stat-label">Newsletter Subscribers</div>
+                    <i class="fas fa-users stat-icon"></i>
+                </div>
+            </div>
+        </div>
+
+        <div class="row">
+            <!-- Recent Orders -->
+            <div class="col-lg-8">
+                <div class="recent-orders">
+                    <div class="recent-orders-header">
+                        <h3>Recent Orders</h3>
+                    </div>
+
+                    <div class="order-item">
+                        <div class="order-info">
+                            <h6>#ORD-001</h6>
+                            <small>Sarah Johnson - Red Velvet Cake</small>
+                        </div>
+                        <div>
+                            <span class="order-status status-pending">Pending</span>
+                            <div><small>KES 3,500</small></div>
+                        </div>
+                    </div>
+
+                    <div class="order-item">
+                        <div class="order-info">
+                            <h6>#ORD-002</h6>
+                            <small>Michael Chen - Wedding Cake</small>
+                        </div>
+                        <div>
+                            <span class="order-status status-confirmed">Confirmed</span>
+                            <div><small>KES 15,000</small></div>
+                        </div>
+                    </div>
+
+                    <div class="order-item">
+                        <div class="order-info">
+                            <h6>#ORD-003</h6>
+                            <small>Emma Wilson - Birthday Cupcakes</small>
+                        </div>
+                        <div>
+                            <span class="order-status status-completed">Completed</span>
+                            <div><small>KES 2,800</small></div>
+                        </div>
+                    </div>
+
+                    <div class="order-item">
+                        <div class="order-info">
+                            <h6>#ORD-004</h6>
+                            <small>David Brown - Chocolate Cake</small>
+                        </div>
+                        <div>
+                            <span class="order-status status-pending">Pending</span>
+                            <div><small>KES 4,200</small></div>
+                        </div>
+                    </div>
+
+                    <div class="order-item">
+                        <a href="{% url 'admin_orders' %}" class="btn btn-link text-center w-100">
+                            View All Orders <i class="fas fa-arrow-right"></i>
+                        </a>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Quick Actions -->
+            <div class="col-lg-4">
+                <div class="quick-actions">
+                    <h4 class="mb-3" style="color: var(--dark-purple)">Quick Actions</h4>
+
+                    <a href="{% url 'admin_orders' %}" class="action-btn">
+                        <i class="fas fa-shopping-cart"></i>
+                        Manage Orders
+                    </a>
+
+                    <a href="{% url 'admin_products' %}" class="action-btn">
+                        <i class="fas fa-plus-circle"></i>
+                        Add New Product
+                    </a>
+
+                    <a href="{% url 'admin_messages' %}" class="action-btn">
+                        <i class="fas fa-envelope"></i>
+                        Check Messages
+                        {% if stats.unread_messages %}
+                            <span class="badge bg-danger ms-2">{{ stats.unread_messages }}</span>
+                        {% endif %}
+                    </a>
+
+                    <a href="{% url 'admin_settings' %}" class="action-btn">
+                        <i class="fas fa-cog"></i>
+                        Site Settings
+                    </a>
+
+                    <a href="{% url 'home' %}" class="action-btn">
+                        <i class="fas fa-external-link-alt"></i>
+                        View Live Site
+                    </a>
+                </div>
+
+                <!-- Stats Summary -->
+                <div class="quick-actions mt-3">
+                    <h5 class="mb-3" style="color: var(--dark-purple)">Today's Summary</h5>
+
+                    <div class="d-flex justify-content-between mb-2">
+                        <span>Pending Orders:</span>
+                        <strong>{{ stats.pending_orders|default:"3" }}</strong>
+                    </div>
+
+                    <div class="d-flex justify-content-between mb-2">
+                        <span>Completed Orders:</span>
+                        <strong>{{ stats.completed_orders|default:"12" }}</strong>
+                    </div>
+
+                    <div class="d-flex justify-content-between mb-2">
+                        <span>New Messages:</span>
+                        <strong>{{ stats.unread_messages|default:"2" }}</strong>
+                    </div>
+
+                    <hr>
+
+                    <div class="d-flex justify-content-between">
+                        <span><strong>Today's Revenue:</strong></span>
+                        <strong style="color: var(--success-green)">KES {{ stats.today_revenue|default:"18,400"|floatformat:0 }}</strong>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+
+    <script>
+        // Toggle sidebar on mobile
+        function toggleSidebar() {
+            const sidebar = document.getElementById('sidebar');
+            sidebar.classList.toggle('show');
+        }
+
+        // Close sidebar when clicking outside on mobile
+        document.addEventListener('click', function(e) {
+            const sidebar = document.getElementById('sidebar');
+            const toggleBtn = e.target.closest('.btn');
+
+            if (!sidebar.contains(e.target) && !toggleBtn && sidebar.classList.contains('show')) {
+                sidebar.classList.remove('show');
+            }
+        });
+
+        // Auto-refresh stats every 5 minutes
+        setInterval(() => {
+            // You can implement auto-refresh logic here
+            // location.reload();
+        }, 300000);
+    </script>
+</body>
+</html>
