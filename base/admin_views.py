@@ -1,15 +1,16 @@
 # base/admin_views.py
-from django.shortcuts import render, get_object_or_404
+from django.contrib import messages
+from django.shortcuts import render, get_object_or_404, redirect
 from django.contrib.admin.views.decorators import staff_member_required
-from django.contrib.auth.decorators import login_required
 from django.http import JsonResponse
 from django.core.paginator import Paginator
-from django.db.models import Q, Sum, Count
+from django.db.models import Q, Sum, Count, Max, Min
 from django.utils import timezone
 from datetime import timedelta
 import json
 
-from base.models import Order, Product, NewsletterSubscriber, ContactMessage, SiteSettings
+from base.forms import ProductForm
+from base.models import Order, Product, NewsletterSubscriber, ContactMessage, SiteSettings, Category
 
 
 @staff_member_required
@@ -20,6 +21,12 @@ def admin_dashboard(request):
     week_ago = today - timedelta(days=7)
     month_ago = today - timedelta(days=30)
 
+    # Calculate week revenue
+    week_revenue = Order.objects.filter(
+        status='completed',
+        created_at__date__gte=week_ago
+    ).aggregate(total=Sum('total_amount'))['total'] or 0
+
     stats = {
         'total_orders': Order.objects.count(),
         'pending_orders': Order.objects.filter(status='pending').count(),
@@ -28,6 +35,7 @@ def admin_dashboard(request):
         'cancelled_orders': Order.objects.filter(status='cancelled').count(),
         'total_revenue': Order.objects.filter(status='completed').aggregate(
             total=Sum('total_amount'))['total'] or 0,
+        'week_revenue': week_revenue,
         'this_week_orders': Order.objects.filter(created_at__date__gte=week_ago).count(),
         'this_month_orders': Order.objects.filter(created_at__date__gte=month_ago).count(),
         'total_products': Product.objects.count(),
@@ -36,6 +44,9 @@ def admin_dashboard(request):
         'unread_messages': ContactMessage.objects.filter(is_read=False).count(),
     }
 
+    # Get recent orders
+    recent_orders = Order.objects.select_related().prefetch_related('items__product').order_by('-created_at')[:5]
+
     try:
         site_settings = SiteSettings.objects.first()
     except SiteSettings.DoesNotExist:
@@ -43,6 +54,7 @@ def admin_dashboard(request):
 
     context = {
         'stats': stats,
+        'recent_orders': recent_orders,
         'site_settings': site_settings,
     }
 
@@ -201,9 +213,9 @@ def admin_products(request):
         products = products.filter(category_id=category_filter)
 
     if availability_filter == 'available':
-        products = products.filter(is_available=True)
+        products = products.filter(is_active=True)
     elif availability_filter == 'unavailable':
-        products = products.filter(is_available=False)
+        products = products.filter(is_active=False)
 
     if search_query:
         products = products.filter(
@@ -213,6 +225,15 @@ def admin_products(request):
 
     # Order by name
     products = products.order_by('name')
+
+    best_sellers = Product.best_sellers(limit=3)
+
+    stats = {
+        'total_products': Product.objects.count(),
+        'available_products': Product.objects.filter(is_active=True).count(),
+        'best_sellers': best_sellers.count(),  # ✅ safe, it’s a queryset
+        'low_stock': Product.objects.filter(stock_quantity__lte=5, is_active=True).count(),
+    }
 
     # Pagination
     paginator = Paginator(products, 20)  # 20 products per page
@@ -226,6 +247,7 @@ def admin_products(request):
 
     context = {
         'products': products_page,
+        'stats': stats,
         'site_settings': site_settings,
         'current_filters': {
             'category': category_filter,
@@ -240,6 +262,9 @@ def admin_products(request):
 @staff_member_required
 def admin_customers(request):
     """Customers management view"""
+    today = timezone.now().date()
+    month_ago = today - timedelta(days=30)
+
     # Get unique customers from orders
     customers = Order.objects.values(
         'customer_name',
@@ -248,8 +273,22 @@ def admin_customers(request):
     ).annotate(
         total_orders=Count('id'),
         total_spent=Sum('total_amount', filter=Q(status='completed')),
-        last_order=timezone.now()
+        last_order=Max('created_at'),  # Use Max() to get the latest order date
+        first_order=Min('created_at')  # Add first order date for "customer since"
     ).order_by('-total_orders')
+
+    # Calculate customer statistics
+    total_customers = customers.count()
+    repeat_customers = customers.filter(total_orders__gte=2).count()
+    new_customers = customers.filter(first_order__date__gte=month_ago).count()
+    vip_customers = customers.filter(total_spent__gte=20000).count()
+
+    stats = {
+        'total_customers': total_customers,
+        'repeat_customers': repeat_customers,
+        'new_customers': new_customers,
+        'vip_customers': vip_customers,
+    }
 
     # Pagination
     paginator = Paginator(customers, 25)
@@ -263,6 +302,7 @@ def admin_customers(request):
 
     context = {
         'customers': customers_page,
+        'stats': stats,
         'site_settings': site_settings,
     }
 
@@ -272,6 +312,8 @@ def admin_customers(request):
 @staff_member_required
 def admin_messages(request):
     """Messages management view"""
+    today = timezone.now().date()
+
     # Get filter parameters
     status_filter = request.GET.get('status', '')
     search_query = request.GET.get('search', '')
@@ -296,6 +338,19 @@ def admin_messages(request):
     # Order by newest first
     messages = messages.order_by('-created_at')
 
+    # Calculate statistics
+    total_messages = ContactMessage.objects.count()
+    unread_messages = ContactMessage.objects.filter(is_read=False).count()
+    today_messages = ContactMessage.objects.filter(created_at__date=today).count()
+    read_messages = ContactMessage.objects.filter(is_read=True).count()
+
+    stats = {
+        'total_messages': total_messages,
+        'unread_messages': unread_messages,
+        'today_messages': today_messages,
+        'read_messages': read_messages,
+    }
+
     # Pagination
     paginator = Paginator(messages, 25)
     page_number = request.GET.get('page')
@@ -308,6 +363,7 @@ def admin_messages(request):
 
     context = {
         'messages': messages_page,
+        'stats': stats,
         'site_settings': site_settings,
         'current_filters': {
             'status': status_filter,
@@ -316,6 +372,200 @@ def admin_messages(request):
     }
 
     return render(request, 'admin/messages.html', context)
+
+
+@staff_member_required
+def admin_mark_message_read(request, message_id):
+    """Mark a message as read"""
+    if request.method == 'POST':
+        try:
+            message = get_object_or_404(ContactMessage, id=message_id)
+            message.is_read = True
+            message.save()
+            return JsonResponse({'success': True, 'message': 'Message marked as read'})
+        except Exception as e:
+            return JsonResponse({'success': False, 'error': str(e)}, status=400)
+
+    return JsonResponse({'error': 'Method not allowed'}, status=405)
+
+
+@staff_member_required
+def admin_delete_message(request, message_id):
+    """Delete a message"""
+    if request.method == 'DELETE':
+        try:
+            message = get_object_or_404(ContactMessage, id=message_id)
+            message.delete()
+            return JsonResponse({'success': True, 'message': 'Message deleted successfully'})
+        except Exception as e:
+            return JsonResponse({'success': False, 'error': str(e)}, status=400)
+
+    return JsonResponse({'error': 'Method not allowed'}, status=405)
+
+
+@staff_member_required
+def admin_add_product(request):
+    """Add new product"""
+    if request.method == 'POST':
+        form = ProductForm(request.POST)
+        if form.is_valid():
+            try:
+                product = form.save()
+                messages.success(
+                    request,
+                    f'Product "{product.name}" has been created successfully!'
+                )
+                return redirect('admin_products')
+            except Exception as e:
+                messages.error(
+                    request,
+                    f'Error creating product: {str(e)}'
+                )
+        else:
+            messages.error(
+                request,
+                'Please correct the errors below.'
+            )
+    else:
+        form = ProductForm()
+
+    try:
+        site_settings = SiteSettings.objects.first()
+    except SiteSettings.DoesNotExist:
+        site_settings = None
+
+    # Get categories for the form
+    categories = Category.objects.filter(is_active=True)
+
+    context = {
+        'form': form,
+        'site_settings': site_settings,
+        'categories': categories,
+    }
+
+    return render(request, 'admin/add_product.html', context)
+
+
+@staff_member_required
+def admin_edit_product(request, product_id):
+    """Edit existing product"""
+    product = get_object_or_404(Product, id=product_id)
+
+    if request.method == 'POST':
+        form = ProductForm(request.POST, instance=product)
+        if form.is_valid():
+            try:
+                product = form.save()
+                messages.success(
+                    request,
+                    f'Product "{product.name}" has been updated successfully!'
+                )
+                return redirect('admin_products')
+            except Exception as e:
+                messages.error(
+                    request,
+                    f'Error updating product: {str(e)}'
+                )
+        else:
+            messages.error(
+                request,
+                'Please correct the errors below.'
+            )
+    else:
+        form = ProductForm(instance=product)
+
+    try:
+        site_settings = SiteSettings.objects.first()
+    except SiteSettings.DoesNotExist:
+        site_settings = None
+
+    categories = Category.objects.filter(is_active=True)
+
+    context = {
+        'form': form,
+        'product': product,
+        'site_settings': site_settings,
+        'categories': categories,
+        'is_editing': True,
+    }
+
+    return render(request, 'admin/add_product.html', context)
+
+
+@staff_member_required
+def admin_delete_product(request, product_id):
+    """Delete product via API"""
+    if request.method == 'DELETE':
+        try:
+            product = get_object_or_404(Product, id=product_id)
+            product_name = product.name
+            product.delete()
+            return JsonResponse({
+                'success': True,
+                'message': f'Product "{product_name}" deleted successfully'
+            })
+        except Exception as e:
+            return JsonResponse({
+                'success': False,
+                'error': str(e)
+            }, status=400)
+
+    return JsonResponse({'error': 'Method not allowed'}, status=405)
+
+
+@staff_member_required
+def admin_toggle_product_availability(request, product_id):
+    """Toggle product availability via API"""
+    if request.method == 'PATCH':
+        try:
+            product = get_object_or_404(Product, id=product_id)
+            product.is_active = not product.is_active
+            product.save()
+
+            status = "available" if product.is_active else "unavailable"
+            return JsonResponse({
+                'success': True,
+                'message': f'Product is now {status}',
+                'is_active': product.is_active
+            })
+        except Exception as e:
+            return JsonResponse({
+                'success': False,
+                'error': str(e)
+            }, status=400)
+
+    return JsonResponse({'error': 'Method not allowed'}, status=405)
+
+
+@staff_member_required
+def admin_toggle_product_availability(request, product_id):
+    """Toggle product availability via API"""
+    print(f"Toggle request received for product {product_id}")  # Debug
+    print(f"Request method: {request.method}")  # Debug
+
+    if request.method == 'PATCH':
+        try:
+            product = get_object_or_404(Product, id=product_id)
+            old_status = product.is_active
+            product.is_active = not product.is_active
+            product.save()
+
+            status = "available" if product.is_active else "unavailable"
+            print(f"Product {product.name} changed from {old_status} to {product.is_active}")  # Debug
+
+            return JsonResponse({
+                'success': True,
+                'message': f'Product is now {status}',
+                'is_active': product.is_active
+            })
+        except Exception as e:
+            print(f"Error toggling product: {e}")  # Debug
+            return JsonResponse({
+                'success': False,
+                'error': str(e)
+            }, status=400)
+
+    return JsonResponse({'error': 'Method not allowed'}, status=405)
 
 
 @staff_member_required
@@ -365,4 +615,3 @@ def admin_settings(request):
     }
 
     return render(request, 'admin/settings.html', context)
-

@@ -429,7 +429,7 @@
                                 <small class="text-muted">{{ customer.customer_phone }}</small>
                             </td>
                             <td><strong>{{ customer.total_orders }}</strong> orders</td>
-                            <td><strong>KES {{ customer.total_spent|floatformat:0 }}</strong></td>
+                            <td><strong>KES {{ customer.total_spent|floatformat:0|default:"0" }}</strong></td>
                             <td>
                                 {% if customer.total_spent >= 20000 %}
                                     <span class="customer-badge badge-vip">VIP</span>
@@ -456,104 +456,10 @@
                             </td>
                         </tr>
                         {% empty %}
-                        <!-- Sample data for demo -->
                         <tr>
-                            <td>
-                                <div class="d-flex align-items-center">
-                                    <div class="customer-avatar">S</div>
-                                    <div class="customer-info ms-3">
-                                        <h6>Sarah Johnson</h6>
-                                        <small>Customer since Jan 2024</small>
-                                    </div>
-                                </div>
-                            </td>
-                            <td>
-                                <div>sarah.johnson@email.com</div>
-                                <small class="text-muted">+254 712 345 678</small>
-                            </td>
-                            <td><strong>8</strong> orders</td>
-                            <td><strong>KES 28,500</strong></td>
-                            <td><span class="customer-badge badge-vip">VIP</span></td>
-                            <td>
-                                Dec 15, 2024<br>
-                                <small>3 days ago</small>
-                            </td>
-                            <td>
-                                <button class="action-btn btn-view" onclick="viewCustomer('sarah.johnson@email.com')">
-                                    <i class="fas fa-eye"></i>
-                                </button>
-                                <button class="action-btn btn-email" onclick="emailCustomer('sarah.johnson@email.com')">
-                                    <i class="fas fa-envelope"></i>
-                                </button>
-                                <button class="action-btn btn-orders" onclick="viewOrders('sarah.johnson@email.com')">
-                                    <i class="fas fa-shopping-cart"></i>
-                                </button>
-                            </td>
-                        </tr>
-                        <tr>
-                            <td>
-                                <div class="d-flex align-items-center">
-                                    <div class="customer-avatar">M</div>
-                                    <div class="customer-info ms-3">
-                                        <h6>Michael Chen</h6>
-                                        <small>Customer since Mar 2024</small>
-                                    </div>
-                                </div>
-                            </td>
-                            <td>
-                                <div>m.chen@business.com</div>
-                                <small class="text-muted">+254 723 456 789</small>
-                            </td>
-                            <td><strong>5</strong> orders</td>
-                            <td><strong>KES 47,200</strong></td>
-                            <td><span class="customer-badge badge-vip">VIP</span></td>
-                            <td>
-                                Dec 10, 2024<br>
-                                <small>1 week ago</small>
-                            </td>
-                            <td>
-                                <button class="action-btn btn-view">
-                                    <i class="fas fa-eye"></i>
-                                </button>
-                                <button class="action-btn btn-email">
-                                    <i class="fas fa-envelope"></i>
-                                </button>
-                                <button class="action-btn btn-orders">
-                                    <i class="fas fa-shopping-cart"></i>
-                                </button>
-                            </td>
-                        </tr>
-                        <tr>
-                            <td>
-                                <div class="d-flex align-items-center">
-                                    <div class="customer-avatar">E</div>
-                                    <div class="customer-info ms-3">
-                                        <h6>Emma Wilson</h6>
-                                        <small>Customer since Nov 2024</small>
-                                    </div>
-                                </div>
-                            </td>
-                            <td>
-                                <div>emma.w@gmail.com</div>
-                                <small class="text-muted">+254 734 567 890</small>
-                            </td>
-                            <td><strong>2</strong> orders</td>
-                            <td><strong>KES 6,300</strong></td>
-                            <td><span class="customer-badge badge-new">New</span></td>
-                            <td>
-                                Dec 12, 2024<br>
-                                <small>6 days ago</small>
-                            </td>
-                            <td>
-                                <button class="action-btn btn-view">
-                                    <i class="fas fa-eye"></i>
-                                </button>
-                                <button class="action-btn btn-email">
-                                    <i class="fas fa-envelope"></i>
-                                </button>
-                                <button class="action-btn btn-orders">
-                                    <i class="fas fa-shopping-cart"></i>
-                                </button>
+                            <td colspan="7" class="text-center py-5">
+                                <i class="fas fa-users fa-3x text-muted mb-3"></i>
+                                <p class="text-muted">No customers found</p>
                             </td>
                         </tr>
                         {% endfor %}

@@ -4,6 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="csrf-token" content="{{ csrf_token }}">
     <title>Products Management - Admin Dashboard</title>
 
     <!-- Bootstrap & Fonts -->
@@ -391,25 +392,25 @@
         <div class="row stats-row">
             <div class="col-lg-3 col-md-6 mb-3">
                 <div class="stat-card total">
-                    <div class="stat-number text-info">{{ products|length|default:"45" }}</div>
+                    <div class="stat-number text-info">{{ products.paginator.count }}</div>
                     <div class="stat-label">Total Products</div>
                 </div>
             </div>
             <div class="col-lg-3 col-md-6 mb-3">
                 <div class="stat-card available">
-                    <div class="stat-number text-success">42</div>
+                    <div class="stat-number text-success">{{ stats.available_products }}</div>
                     <div class="stat-label">Available</div>
                 </div>
             </div>
             <div class="col-lg-3 col-md-6 mb-3">
                 <div class="stat-card best-sellers">
-                    <div class="stat-number text-warning">8</div>
+                    <div class="stat-number text-warning">{{ stats.best_sellers }}</div>
                     <div class="stat-label">Best Sellers</div>
                 </div>
             </div>
             <div class="col-lg-3 col-md-6 mb-3">
                 <div class="stat-card low-stock">
-                    <div class="stat-number text-danger">3</div>
+                    <div class="stat-number text-danger">{{ stats.low_stock }}</div>
                     <div class="stat-label">Low Stock</div>
                 </div>
             </div>
@@ -434,7 +435,7 @@
                         <option value="available">Available</option>
                         <option value="unavailable">Unavailable</option>
                     </select>
-                    <a href="#" class="btn-add-product">
+                    <a href="{% url 'admin_add_product' %}" class="btn-add-product">
                         <i class="fas fa-plus"></i> Add Product
                     </a>
                 </div>
@@ -461,9 +462,12 @@
                         </div>
 
                         <div class="d-flex justify-content-between align-items-center mb-2">
-                            <span class="product-status {% if product.is_available %}status-available{% else %}status-unavailable{% endif %}">
-                                {% if product.is_available %}Available{% else %}Unavailable{% endif %}
-                            </span>
+                                <!-- To this -->
+                                <span class="product-status {% if product.is_active %}status-available{% else %}status-unavailable{% endif %}">
+                                    {% if product.is_active %}Available{% else %}Unavailable{% endif %}
+                                </span>
+
+                                <!-- And this button -->
                             <small class="text-muted">Stock: {{ product.stock_quantity }}</small>
                         </div>
 
@@ -471,10 +475,10 @@
                             <button class="action-btn btn-edit" onclick="editProduct({{ product.id }})">
                                 <i class="fas fa-edit"></i> Edit
                             </button>
-                            <button class="action-btn btn-toggle" onclick="toggleAvailability({{ product.id }})">
-                                <i class="fas fa-toggle-{% if product.is_available %}on{% else %}off{% endif %}"></i>
-                                {% if product.is_available %}Hide{% else %}Show{% endif %}
-                            </button>
+                                <button class="action-btn btn-toggle" onclick="toggleAvailability({{ product.id }})">
+                                    <i class="fas fa-toggle-{% if product.is_active %}on{% else %}off{% endif %}"></i>
+                                    {% if product.is_active %}Hide{% else %}Show{% endif %}
+                                </button>
                             <button class="action-btn btn-delete" onclick="deleteProduct({{ product.id }})">
                                 <i class="fas fa-trash"></i> Delete
                             </button>
@@ -569,34 +573,60 @@
             });
         });
 
-        // Product actions
         function editProduct(productId) {
-            // Redirect to edit page or open modal
-            window.location.href = `/admin/products/${productId}/edit/`;
+            // Use Django URL pattern
+            window.location.href = "{% url 'admin_edit_product' 0 %}".replace('0', productId);
         }
 
         function toggleAvailability(productId) {
             if (confirm('Toggle product availability?')) {
-                fetch(`/api/products/${productId}/`, {
+                // Get CSRF token properly
+                const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]')?.value ||
+                                 document.querySelector('meta[name=csrf-token]')?.getAttribute('content') ||
+                                 getCookie('csrftoken');
+
+                fetch(`/api/products/${productId}/toggle/`, {  // Fixed: correct endpoint
                     method: 'PATCH',
                     headers: {
                         'Content-Type': 'application/json',
-                        'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]')?.value || '',
-                    },
-                    body: JSON.stringify({
-                        is_available: !document.querySelector(`[onclick="toggleAvailability(${productId})"]`)
-                            .textContent.includes('Hide')
-                    })
+                        'X-CSRFToken': csrfToken,
+                    }
+                    // Removed body - let the backend handle the toggle logic
                 })
-                .then(response => response.json())
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error(`HTTP error! status: ${response.status}`);
+                    }
+                    return response.json();
+                })
                 .then(data => {
-                    location.reload();
+                    if (data.success) {
+                        location.reload();
+                    } else {
+                        alert(data.error || 'Error updating product');
+                    }
                 })
                 .catch(error => {
                     console.error('Error:', error);
-                    alert('Error updating product');
+                    alert('Error updating product: ' + error.message);
                 });
             }
+        }
+
+        // Helper function to get CSRF token from cookies
+        function getCookie(name) {
+            let cookieValue = null;
+            if (document.cookie && document.cookie !== '') {
+                const cookies = document.cookie.split(';');
+                for (let i = 0; i < cookies.length; i++) {
+                    const cookie = cookies[i].trim();
+                    if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                        cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                        break;
+                    }
+                }
+            }
+            return cookieValue;
         }
 
         function deleteProduct(productId) {
@@ -623,4 +653,3 @@
     </script>
 </body>
 </html>
-

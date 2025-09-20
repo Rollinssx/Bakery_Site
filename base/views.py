@@ -193,7 +193,7 @@ def checkout(request):
         'min_delivery_date': min_delivery_date,
     }
 
-    return render(request, 'checkout.html', context)
+    return render(request, 'base/checkout.html', context)
 
 
 def contact_submit(request):
@@ -550,7 +550,7 @@ def order_confirmation(request, order_number):
         'settings': settings,
     }
 
-    return render(request, 'order_confirmation.html', context)
+    return render(request, 'base/order_confirmation.html', context)
 
 # API ViewSets (keep existing ones)
 

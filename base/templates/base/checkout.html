@@ -1,124 +1,124 @@
 {% extends "main.html" %}
 {% load static %}
 <head>
-    <title>{% block title %}Checkout{% block title %}{{ site_settings.business_name|default:"Sweet Delights" }}</title>
+    <title>{% block title %}Checkout{% endblock title %}{{ site_settings.business_name|default:"Sweet Delights" }}</title>
 </head>
 {% block content %}
-<body>
-    <header>
-        <div class="checkout-container checkout-navbar">
-            <a href="{% url 'home' %}" class="checkout-logo">{{ settings.business_name }}</a>
-            <nav class="checkout-nav-links">
-                <a href="{% url 'home' %}" class="checkout-nav-link">Home</a>
-                <a href="{% url 'products' %}" class="checkout-nav-link">Products</a>
-                <a href="{% url 'contact' %}" class="checkout-nav-link">Contact</a>
-                <a href="{% url 'cart' %}" class="checkout-nav-link">Cart ({{ cart_items|length }})</a>
-            </nav>
-        </div>
-    </header>
+    <body>
+        <header>
+            <div class="checkout-container checkout-navbar">
+                <a href="{% url 'home' %}" class="checkout-logo">{{ settings.business_name }}</a>
+                <nav class="checkout-nav-links">
+                    <a href="{% url 'home' %}" class="checkout-nav-link">Home</a>
+                    <a href="{% url 'products' %}" class="checkout-nav-link">Products</a>
+                    <a href="{% url 'contact' %}" class="checkout-nav-link">Contact</a>
+                    <a href="{% url 'cart' %}" class="checkout-nav-link">Cart ({{ cart_items|length }})</a>
+                </nav>
+            </div>
+        </header>
 
-    <main class="checkout-main-section">
-        <div class="checkout-container">
-            {% if cart_items %}
-                <div class="checkout-grid">
-                    <!-- Shipping Form -->
-                    <div class="checkout-card">
-                        <h2>Order Information</h2>
+        <main class="checkout-main-section">
+            <div class="checkout-container">
+                {% if cart_items %}
+                    <div class="checkout-grid">
+                        <!-- Shipping Form -->
+                        <div class="checkout-card">
+                            <h2>Order Information</h2>
 
-                        {% if messages %}
-                            {% for message in messages %}
-                                <div class="alert alert-{{ message.tags }}">{{ message }}</div>
-                            {% endfor %}
-                        {% endif %}
+                            {% if messages %}
+                                {% for message in messages %}
+                                    <div class="alert alert-{{ message.tags }}">{{ message }}</div>
+                                {% endfor %}
+                            {% endif %}
 
-                        <form method="post">
-                            {% csrf_token %}
-                            <div class="form-row">
-                                <div class="form-group">
-                                    <label for="customer_name">Full Name <span class="required-asterisk">*</span></label>
-                                    <input type="text" id="customer_name" name="customer_name" class="form-control" required>
+                            <form method="post">
+                                {% csrf_token %}
+                                <div class="form-row">
+                                    <div class="form-group">
+                                        <label for="customer_name">Full Name <span class="required-asterisk">*</span></label>
+                                        <input type="text" id="customer_name" name="customer_name" class="form-control" required>
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="customer_email">Email <span class="required-asterisk">*</span></label>
+                                        <input type="email" id="customer_email" name="customer_email" class="form-control" required>
+                                    </div>
                                 </div>
+
                                 <div class="form-group">
-                                    <label for="customer_email">Email <span class="required-asterisk">*</span></label>
-                                    <input type="email" id="customer_email" name="customer_email" class="form-control" required>
+                                    <label for="customer_phone">Phone Number <span class="required-asterisk">*</span></label>
+                                    <input type="tel" id="customer_phone" name="customer_phone" class="form-control" required>
                                 </div>
-                            </div>
 
-                            <div class="form-group">
-                                <label for="customer_phone">Phone Number <span class="required-asterisk">*</span></label>
-                                <input type="tel" id="customer_phone" name="customer_phone" class="form-control" required>
-                            </div>
+                                <div class="form-group">
+                                    <label for="delivery_date">Delivery/Pickup Date <span class="required-asterisk">*</span></label>
+                                    <input type="datetime-local" id="delivery_date" name="delivery_date" class="form-control" required min="{{ min_delivery_date }}">
+                                    <small style="color: var(--subtle-text);">Minimum {{ settings.minimum_order_notice }} notice required</small>
+                                </div>
 
-                            <div class="form-group">
-                                <label for="delivery_date">Delivery/Pickup Date <span class="required-asterisk">*</span></label>
-                                <input type="datetime-local" id="delivery_date" name="delivery_date" class="form-control" required min="{{ min_delivery_date }}">
-                                <small style="color: var(--subtle-text);">Minimum {{ settings.minimum_order_notice }} notice required</small>
-                            </div>
+                                <div class="form-group">
+                                    <label for="delivery_address">Delivery Address</label>
+                                    <textarea id="delivery_address" name="delivery_address" class="form-control" rows="3" placeholder="Leave blank for pickup at our store"></textarea>
+                                    <small style="color: var(--subtle-text);">Leave blank if you want to pick up at our store</small>
+                                </div>
 
-                            <div class="form-group">
-                                <label for="delivery_address">Delivery Address</label>
-                                <textarea id="delivery_address" name="delivery_address" class="form-control" rows="3" placeholder="Leave blank for pickup at our store"></textarea>
-                                <small style="color: var(--subtle-text);">Leave blank if you want to pick up at our store</small>
-                            </div>
+                                <div class="form-group">
+                                    <label for="special_instructions">Special Instructions</label>
+                                    <textarea id="special_instructions" name="special_instructions" class="form-control" rows="2" placeholder="Any special requests or notes..."></textarea>
+                                </div>
 
-                            <div class="form-group">
-                                <label for="special_instructions">Special Instructions</label>
-                                <textarea id="special_instructions" name="special_instructions" class="form-control" rows="2" placeholder="Any special requests or notes..."></textarea>
+                                <div class="summary-divider"></div>
+
+                                <h3>Payment Method</h3>
+                                <p>Pay on Delivery/Pickup</p>
+
+                                <button type="submit" class="checkout-btn">Place Order</button>
+                            </form>
+                        </div>
+
+                        <!-- Order Summary -->
+                        <div class="order-summary">
+                            <h3>Order Summary</h3>
+                            <div id="summary-items-list">
+                                {% for item in cart_items %}
+                                    <div class="summary-item">
+                                        <img src="https://via.placeholder.com/60x60.png?text={{ item.product.name|slice:':3' }}" alt="{{ item.product.name }}">
+                                        <div class="item-details">
+                                            <h4>{{ item.product.name }}</h4>
+                                            <p>Qty: {{ item.quantity }}</p>
+                                        </div>
+                                        <span class="item-price">KES {{ item.get_total_price }}</span>
+                                    </div>
+                                {% endfor %}
                             </div>
 
                             <div class="summary-divider"></div>
 
-                            <h3>Payment Method</h3>
-                            <p>Pay on Delivery/Pickup</p>
+                            <div class="summary-row">
+                                <span>Subtotal:</span>
+                                <span>KES {{ cart_total }}</span>
+                            </div>
+                            <div class="summary-row">
+                                <span>Delivery:</span>
+                                <span>TBD</span>
+                            </div>
 
-                            <button type="submit" class="checkout-btn">Place Order</button>
-                        </form>
-                    </div>
+                            <div class="summary-divider"></div>
 
-                    <!-- Order Summary -->
-                    <div class="order-summary">
-                        <h3>Order Summary</h3>
-                        <div id="summary-items-list">
-                            {% for item in cart_items %}
-                                <div class="summary-item">
-                                    <img src="https://via.placeholder.com/60x60.png?text={{ item.product.name|slice:':3' }}" alt="{{ item.product.name }}">
-                                    <div class="item-details">
-                                        <h4>{{ item.product.name }}</h4>
-                                        <p>Qty: {{ item.quantity }}</p>
-                                    </div>
-                                    <span class="item-price">KES {{ item.get_total_price }}</span>
-                                </div>
-                            {% endfor %}
-                        </div>
-
-                        <div class="summary-divider"></div>
-
-                        <div class="summary-row">
-                            <span>Subtotal:</span>
-                            <span>KES {{ cart_total }}</span>
-                        </div>
-                        <div class="summary-row">
-                            <span>Delivery:</span>
-                            <span>TBD</span>
-                        </div>
-
-                        <div class="summary-divider"></div>
-
-                        <div class="summary-row summary-total">
-                            <span>Total:</span>
-                            <span>KES {{ cart_total }}</span>
+                            <div class="summary-row summary-total">
+                                <span>Total:</span>
+                                <span>KES {{ cart_total }}</span>
+                            </div>
                         </div>
                     </div>
-                </div>
-            {% else %}
-                <div class="empty-cart-message">
-                    <h2>Your cart is empty</h2>
-                    <p>Add some delicious items to your cart before checking out.</p>
-                    <a href="{% url 'products' %}">Browse Products</a>
-                </div>
-            {% endif %}
-        </div>
-    </main>
+                {% else %}
+                    <div class="empty-cart-message">
+                        <h2>Your cart is empty</h2>
+                        <p>Add some delicious items to your cart before checking out.</p>
+                        <a href="{% url 'products' %}">Browse Products</a>
+                    </div>
+                {% endif %}
+            </div>
+        </main>
 
-</body>
+    </body>
 {% endblock content %}

@@ -3,6 +3,7 @@ from django.urls import path, include
 from rest_framework.routers import DefaultRouter
 from . import views
 from . import views, cart_views, admin_views, admin_urls
+from .admin_views import admin_toggle_product_availability, admin_update_order_status, admin_order_detail
 
 # API Router for ViewSets
 router = DefaultRouter()
@@ -39,16 +40,18 @@ urlpatterns = [
     path('logout/', views.logout_view, name='logout'),
     path('profile/', views.profile_view, name='profile'),  # Optional
 
-    # Admin Panel URLs
-    path('admin-panel/', include(admin_urls, namespace='admin')),
+    # Admin panel URLs
     path('admin-panel/', admin_views.admin_dashboard, name='admin_dashboard'),
     path('admin-panel/orders/', admin_views.admin_orders, name='admin_orders'),
     path('admin-panel/orders/<int:order_id>/', admin_views.admin_order_detail, name='admin_order_detail'),
-    path('admin-panel/orders/<int:order_id>/update/', admin_views.admin_update_order_status,
-         name='admin_update_order_status'),
+    path('admin-panel/orders/<int:order_id>/update/', admin_views.admin_update_order_status, name='admin_update_order_status'),
     path('admin-panel/products/', admin_views.admin_products, name='admin_products'),
+    path('admin-panel/products/edit/<int:product_id>/', admin_views.admin_edit_product, name='admin_edit_product'),
+    path('admin-panel/products/add/', admin_views.admin_add_product, name='admin_add_product'),
     path('admin-panel/customers/', admin_views.admin_customers, name='admin_customers'),
     path('admin-panel/messages/', admin_views.admin_messages, name='admin_messages'),
+    path('admin-panel/messages/<int:message_id>/mark-read/', admin_views.admin_mark_message_read, name='admin_mark_message_read'),
+    path('admin-panel/messages/<int:message_id>/delete/', admin_views.admin_delete_message, name='admin_delete_message'),
     path('admin-panel/settings/', admin_views.admin_settings, name='admin_settings'),
 
     # Cart AJAX operations
@@ -61,6 +64,9 @@ urlpatterns = [
 
     # API endpoints
     path('api/', include(router.urls)),
+    path('api/products/<int:product_id>/toggle/', admin_toggle_product_availability, name='admin_toggle_product'),
+    path('api/orders/<int:order_id>/status/', admin_update_order_status, name='admin_update_order_status'),
+    path('admin/orders/<int:order_id>/detail/', admin_order_detail, name='admin_order_detail'),
 ]
 
 # If you're including this in your main project urls.py, use:

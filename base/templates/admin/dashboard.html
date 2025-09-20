@@ -318,28 +318,28 @@
         <div class="row stats-row">
             <div class="col-lg-3 col-md-6 mb-3">
                 <div class="stat-card orders">
-                    <div class="stat-number text-info">{{ stats.total_orders|default:"24" }}</div>
+                    <div class="stat-number text-info">{{ stats.total_orders }}</div>
                     <div class="stat-label">Total Orders</div>
                     <i class="fas fa-shopping-cart stat-icon"></i>
                 </div>
             </div>
             <div class="col-lg-3 col-md-6 mb-3">
                 <div class="stat-card revenue">
-                    <div class="stat-number text-success">KES {{ stats.total_revenue|default:"156,800"|floatformat:0 }}</div>
+                    <div class="stat-number text-success">KES {{ stats.total_revenue|floatformat:0 }}</div>
                     <div class="stat-label">Total Revenue</div>
                     <i class="fas fa-money-bill-wave stat-icon"></i>
                 </div>
             </div>
             <div class="col-lg-3 col-md-6 mb-3">
                 <div class="stat-card products">
-                    <div class="stat-number text-warning">{{ stats.active_products|default:"45" }}</div>
+                    <div class="stat-number text-warning">{{ stats.active_products }}</div>
                     <div class="stat-label">Active Products</div>
                     <i class="fas fa-box stat-icon"></i>
                 </div>
             </div>
             <div class="col-lg-3 col-md-6 mb-3">
                 <div class="stat-card customers">
-                    <div class="stat-number" style="color: var(--primary-purple)">{{ stats.newsletter_subscribers|default:"234" }}</div>
+                    <div class="stat-number" style="color: var(--primary-purple)">{{ stats.newsletter_subscribers }}</div>
                     <div class="stat-label">Newsletter Subscribers</div>
                     <i class="fas fa-users stat-icon"></i>
                 </div>
@@ -354,55 +354,33 @@
                         <h3>Recent Orders</h3>
                     </div>
 
+                    {% for order in recent_orders %}
                     <div class="order-item">
                         <div class="order-info">
-                            <h6>#ORD-001</h6>
-                            <small>Sarah Johnson - Red Velvet Cake</small>
+                            <h6>{{ order.order_number }}</h6>
+                            <small>{{ order.customer_name }} - {{ order.items.first.product.name }}{% if order.items.count > 1 %} (+{{ order.items.count|add:"-1" }} more){% endif %}</small>
                         </div>
                         <div>
-                            <span class="order-status status-pending">Pending</span>
-                            <div><small>KES 3,500</small></div>
+                            <span class="order-status status-{{ order.status }}">{{ order.get_status_display }}</span>
+                            <div><small>{{ order.formatted_total }}</small></div>
                         </div>
                     </div>
-
+                    {% empty %}
                     <div class="order-item">
-                        <div class="order-info">
-                            <h6>#ORD-002</h6>
-                            <small>Michael Chen - Wedding Cake</small>
-                        </div>
-                        <div>
-                            <span class="order-status status-confirmed">Confirmed</span>
-                            <div><small>KES 15,000</small></div>
+                        <div class="text-center py-4">
+                            <i class="fas fa-inbox fa-2x text-muted mb-2"></i>
+                            <p class="text-muted mb-0">No recent orders</p>
                         </div>
                     </div>
+                    {% endfor %}
 
-                    <div class="order-item">
-                        <div class="order-info">
-                            <h6>#ORD-003</h6>
-                            <small>Emma Wilson - Birthday Cupcakes</small>
-                        </div>
-                        <div>
-                            <span class="order-status status-completed">Completed</span>
-                            <div><small>KES 2,800</small></div>
-                        </div>
-                    </div>
-
-                    <div class="order-item">
-                        <div class="order-info">
-                            <h6>#ORD-004</h6>
-                            <small>David Brown - Chocolate Cake</small>
-                        </div>
-                        <div>
-                            <span class="order-status status-pending">Pending</span>
-                            <div><small>KES 4,200</small></div>
-                        </div>
-                    </div>
-
+                    {% if recent_orders %}
                     <div class="order-item">
                         <a href="{% url 'admin_orders' %}" class="btn btn-link text-center w-100">
                             View All Orders <i class="fas fa-arrow-right"></i>
                         </a>
                     </div>
+                    {% endif %}
                 </div>
             </div>
 
@@ -424,7 +402,7 @@
                     <a href="{% url 'admin_messages' %}" class="action-btn">
                         <i class="fas fa-envelope"></i>
                         Check Messages
-                        {% if stats.unread_messages %}
+                        {% if stats.unread_messages > 0 %}
                             <span class="badge bg-danger ms-2">{{ stats.unread_messages }}</span>
                         {% endif %}
                     </a>
@@ -446,24 +424,24 @@
 
                     <div class="d-flex justify-content-between mb-2">
                         <span>Pending Orders:</span>
-                        <strong>{{ stats.pending_orders|default:"3" }}</strong>
+                        <strong>{{ stats.pending_orders }}</strong>
                     </div>
 
                     <div class="d-flex justify-content-between mb-2">
                         <span>Completed Orders:</span>
-                        <strong>{{ stats.completed_orders|default:"12" }}</strong>
+                        <strong>{{ stats.completed_orders }}</strong>
                     </div>
 
                     <div class="d-flex justify-content-between mb-2">
                         <span>New Messages:</span>
-                        <strong>{{ stats.unread_messages|default:"2" }}</strong>
+                        <strong>{{ stats.unread_messages }}</strong>
                     </div>
 
                     <hr>
 
                     <div class="d-flex justify-content-between">
-                        <span><strong>Today's Revenue:</strong></span>
-                        <strong style="color: var(--success-green)">KES {{ stats.today_revenue|default:"18,400"|floatformat:0 }}</strong>
+                        <span><strong>This Week's Revenue:</strong></span>
+                        <strong style="color: var(--success-green)">KES {{ stats.week_revenue|floatformat:0 }}</strong>
                     </div>
                 </div>
             </div>

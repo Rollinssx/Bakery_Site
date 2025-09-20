@@ -86,6 +86,9 @@ class Category(models.Model):
         return reverse('products') + f'?category={self.slug}'
 
 
+from django.db.models import Sum
+
+
 class Product(models.Model):
     """Product model"""
     name = models.CharField(max_length=200)
@@ -98,6 +101,7 @@ class Product(models.Model):
     is_featured = models.BooleanField(default=False)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
+    is_best_seller = models.BooleanField(default=False)
 
     class Meta:
         ordering = ['-created_at']
@@ -120,6 +124,29 @@ class Product(models.Model):
             return f"Only {self.stock_quantity} left"
         else:
             return "Out of Stock"
+
+    @property
+    def total_sold(self):
+        """Total units sold across all completed orders."""
+        return self.order_items.filter(order__status='completed').aggregate(
+            total=Sum('quantity')
+        )['total'] or 0
+
+    @classmethod
+    def best_sellers(cls, limit=3):
+        """
+        Return the top-selling products.
+        """
+        return (
+            cls.objects.annotate(total_sales=Sum('order_items__quantity'))
+            .filter(order_items__order__status='completed')
+            .order_by('-total_sales')[:limit]
+        )
+
+    @property
+    def is_best_seller(self):
+        """Check if this product is among the top 3 sellers."""
+        return self in Product.best_sellers(limit=3)
 
 
 class CartItem(models.Model):
@@ -159,6 +186,7 @@ class NewsletterSubscriber(models.Model):
     @property
     def full_name(self):
         return f"{self.first_name} {self.last_name}".strip()
+
 
 class Order(models.Model):
     """Model for customer orders"""
@@ -209,7 +237,7 @@ class OrderItem(models.Model):
     """Model for individual items in an order"""
 
     order = models.ForeignKey(Order, on_delete=models.CASCADE, related_name='items')
-    product = models.ForeignKey(Product, on_delete=models.CASCADE)
+    product = models.ForeignKey(Product, on_delete=models.CASCADE, related_name='order_items')  # ✅ add related_name
     quantity = models.PositiveIntegerField(default=1)
     unit_price = models.DecimalField(max_digits=10, decimal_places=2)
     customization_notes = models.TextField(blank=True, help_text="Special requests for this item")
@@ -227,6 +255,7 @@ class OrderItem(models.Model):
     @property
     def formatted_total(self):
         return f"KES {self.total_price:,.2f}"
+
 
 class ContactMessage(models.Model):
     """Contact form messages"""

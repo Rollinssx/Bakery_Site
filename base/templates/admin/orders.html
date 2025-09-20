@@ -4,6 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="csrf-token" content="{{ csrf_token }}">
     <title>Orders Management - Admin Dashboard</title>
 
     <!-- Bootstrap & Fonts -->
@@ -11,7 +12,343 @@
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&family=Schoolbell&display=swap" rel="stylesheet">
     <link href="https://fonts.cdnfonts.com/css/magnolia-script" rel="stylesheet">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
-    <link rel="stylesheet" href="{% static 'styles/admin_dashboard.css' %}">
+
+    <style>
+        :root {
+            --primary-purple: #8B5A96;
+            --dark-purple: rgb(98, 53, 123);
+            --light-purple: rgb(240, 214, 255);
+            --grey-purple: rgb(155, 125, 166);
+            --success-green: #28a745;
+            --warning-yellow: #ffc107;
+            --danger-red: #dc3545;
+            --info-blue: #17a2b8;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Poppins', sans-serif;
+            background-color: #f8f9fa;
+        }
+
+        /* Sidebar */
+        .sidebar {
+            background: var(--dark-purple);
+            color: white;
+            min-height: 100vh;
+            width: 280px;
+            position: fixed;
+            left: 0;
+            top: 0;
+            z-index: 1000;
+            overflow-y: auto;
+        }
+
+        .sidebar-header {
+            padding: 2rem 1.5rem;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+        }
+
+        .sidebar-header h3 {
+            font-family: 'Magnolia Script', cursive;
+            font-size: 2rem;
+            margin: 0;
+        }
+
+        .sidebar-header p {
+            font-size: 0.9rem;
+            opacity: 0.8;
+            margin: 0;
+        }
+
+        .sidebar-menu {
+            padding: 1rem 0;
+        }
+
+        .sidebar-menu .menu-item {
+            display: block;
+            padding: 1rem 1.5rem;
+            color: rgba(255,255,255,0.8);
+            text-decoration: none;
+            transition: all 0.3s;
+            border: none;
+            background: none;
+            width: 100%;
+            text-align: left;
+        }
+
+        .sidebar-menu .menu-item:hover,
+        .sidebar-menu .menu-item.active {
+            background: rgba(255,255,255,0.1);
+            color: white;
+            transform: translateX(5px);
+        }
+
+        .sidebar-menu .menu-item i {
+            margin-right: 10px;
+            width: 20px;
+        }
+
+        /* Main Content */
+        .main-content {
+            margin-left: 280px;
+            padding: 2rem;
+        }
+
+        .page-header {
+            background: white;
+            padding: 1.5rem 2rem;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            margin-bottom: 2rem;
+        }
+
+        .page-header h1 {
+            font-size: 2rem;
+            color: var(--dark-purple);
+            margin: 0;
+        }
+
+        .page-header .breadcrumb {
+            background: none;
+            padding: 0;
+            margin: 0.5rem 0 0 0;
+        }
+
+        /* Stats Cards */
+        .stats-row {
+            margin-bottom: 2rem;
+        }
+
+        .stat-card {
+            background: white;
+            border-radius: 10px;
+            padding: 1.5rem;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            border-left: 4px solid;
+            transition: transform 0.3s;
+        }
+
+        .stat-card:hover {
+            transform: translateY(-2px);
+        }
+
+        .stat-card.pending { border-left-color: var(--warning-yellow); }
+        .stat-card.confirmed { border-left-color: var(--info-blue); }
+        .stat-card.completed { border-left-color: var(--success-green); }
+        .stat-card.revenue { border-left-color: var(--primary-purple); }
+
+        .stat-number {
+            font-size: 2rem;
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+        }
+
+        .stat-label {
+            color: #6c757d;
+            font-size: 0.9rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .stat-icon {
+            font-size: 2.5rem;
+            opacity: 0.3;
+            float: right;
+            margin-top: -1rem;
+        }
+
+        /* Orders Table */
+        .orders-container {
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+
+        .orders-header {
+            padding: 1.5rem 2rem;
+            background: var(--light-purple);
+            border-bottom: 1px solid #e9ecef;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .orders-header h3 {
+            margin: 0;
+            color: var(--dark-purple);
+        }
+
+        .filter-controls {
+            display: flex;
+            gap: 1rem;
+            align-items: center;
+        }
+
+        .filter-select {
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            padding: 0.5rem;
+            background: white;
+        }
+
+        .search-input {
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            padding: 0.5rem 1rem;
+            width: 250px;
+        }
+
+        .orders-table {
+            width: 100%;
+            margin: 0;
+        }
+
+        .orders-table th {
+            background: #f8f9fa;
+            padding: 1rem;
+            font-weight: 600;
+            color: var(--dark-purple);
+            border-bottom: 2px solid #e9ecef;
+        }
+
+        .orders-table td {
+            padding: 1rem;
+            border-bottom: 1px solid #e9ecef;
+            vertical-align: middle;
+        }
+
+        .orders-table tbody tr:hover {
+            background-color: #f8f9fa;
+        }
+
+        /* Status Badges */
+        .status-badge {
+            padding: 0.4rem 0.8rem;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: 500;
+            text-transform: uppercase;
+        }
+
+        .status-pending { background: #fff3cd; color: #856404; }
+        .status-confirmed { background: #d1ecf1; color: #0c5460; }
+        .status-in_progress { background: #d4edda; color: #155724; }
+        .status-ready { background: #cce5ff; color: #004085; }
+        .status-completed { background: #d4edda; color: #155724; }
+        .status-cancelled { background: #f8d7da; color: #721c24; }
+
+        /* Action Buttons */
+        .action-btn {
+            padding: 0.4rem 0.8rem;
+            border: none;
+            border-radius: 5px;
+            font-size: 0.8rem;
+            cursor: pointer;
+            margin-right: 0.5rem;
+            transition: all 0.3s;
+        }
+
+        .btn-view { background: var(--info-blue); color: white; }
+        .btn-edit { background: var(--warning-yellow); color: #333; }
+        .btn-complete { background: var(--success-green); color: white; }
+        .btn-cancel { background: var(--danger-red); color: white; }
+
+        .action-btn:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+        }
+
+        /* Order Details Modal */
+        .modal-header {
+            background: var(--primary-purple);
+            color: white;
+        }
+
+        .order-detail-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 0.5rem 0;
+            border-bottom: 1px solid #eee;
+        }
+
+        .order-detail-item:last-child {
+            border-bottom: none;
+        }
+
+        .order-items-table {
+            margin-top: 1rem;
+        }
+
+        .order-items-table th {
+            background: var(--light-purple);
+            color: var(--dark-purple);
+        }
+
+        /* Pagination */
+        .pagination {
+            justify-content: center;
+            margin: 2rem 0;
+        }
+
+        .page-link {
+            color: var(--primary-purple);
+            border-color: var(--light-purple);
+        }
+
+        .page-link:hover {
+            color: var(--dark-purple);
+            background-color: var(--light-purple);
+            border-color: var(--primary-purple);
+        }
+
+        .page-item.active .page-link {
+            background-color: var(--primary-purple);
+            border-color: var(--primary-purple);
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .sidebar {
+                transform: translateX(-100%);
+                transition: transform 0.3s;
+            }
+
+            .sidebar.show {
+                transform: translateX(0);
+            }
+
+            .main-content {
+                margin-left: 0;
+                padding: 1rem;
+            }
+
+            .filter-controls {
+                flex-direction: column;
+                align-items: stretch;
+            }
+
+            .search-input {
+                width: 100%;
+                margin-bottom: 1rem;
+            }
+
+            .orders-table {
+                font-size: 0.9rem;
+            }
+
+            .orders-table th,
+            .orders-table td {
+                padding: 0.5rem;
+            }
+        }
+    </style>
 </head>
 <body>
     <!-- Sidebar -->
@@ -22,14 +359,16 @@
         </div>
 
         <nav class="sidebar-menu">
-            <a href="{% url 'admin_dashboard' %}" class="menu-item active">
+            <!-- To this -->
+            <a href="{% url 'admin_dashboard' %}" class="menu-item">
                 <i class="fas fa-chart-bar"></i>
                 Dashboard
             </a>
-            <a href="{% url 'admin_orders' %}" class="menu-item">
+            <a href="{% url 'admin_orders' %}" class="menu-item active">
                 <i class="fas fa-shopping-cart"></i>
                 Orders
             </a>
+
             <a href="{% url 'admin_products' %}" class="menu-item">
                 <i class="fas fa-box"></i>
                 Products
@@ -73,28 +412,28 @@
         <div class="row stats-row">
             <div class="col-lg-3 col-md-6 mb-3">
                 <div class="stat-card pending">
-                    <div class="stat-number text-warning">{{ stats.pending_orders|default:"12" }}</div>
+                    <div class="stat-number text-warning">{{ stats.pending_orders }}</div>
                     <div class="stat-label">Pending Orders</div>
                     <i class="fas fa-clock stat-icon"></i>
                 </div>
             </div>
             <div class="col-lg-3 col-md-6 mb-3">
                 <div class="stat-card confirmed">
-                    <div class="stat-number text-info">{{ stats.confirmed_orders|default:"8" }}</div>
+                    <div class="stat-number text-info">{{ stats.confirmed_orders }}</div>
                     <div class="stat-label">Confirmed Orders</div>
                     <i class="fas fa-check-circle stat-icon"></i>
                 </div>
             </div>
             <div class="col-lg-3 col-md-6 mb-3">
                 <div class="stat-card completed">
-                    <div class="stat-number text-success">{{ stats.completed_orders|default:"156" }}</div>
+                    <div class="stat-number text-success">{{ stats.completed_orders }}</div>
                     <div class="stat-label">Completed Orders</div>
                     <i class="fas fa-trophy stat-icon"></i>
                 </div>
             </div>
             <div class="col-lg-3 col-md-6 mb-3">
                 <div class="stat-card revenue">
-                    <div class="stat-number" style="color: var(--primary-purple)">KES {{ stats.total_revenue|default:"245,600"|floatformat:0 }}</div>
+                    <div class="stat-number" style="color: var(--primary-purple)">KES {{ stats.total_revenue|floatformat:0 }}</div>
                     <div class="stat-label">Total Revenue</div>
                     <i class="fas fa-money-bill-wave stat-icon"></i>
                 </div>
@@ -141,8 +480,8 @@
                                 <div>{{ order.customer_name }}</div>
                                 <small class="text-muted">{{ order.customer_email }}</small>
                             </td>
-                            <td>{{ order.items.count }} items</td>
-                            <td><strong>{{ order.total_amount|floatformat:2 }}</strong></td>
+                            <td>{{ order.items.count }} item{{ order.items.count|pluralize }}</td>
+                            <td><strong>{{ order.formatted_price|default:order.total_amount }}</strong></td>
                             <td>
                                 <span class="status-badge status-{{ order.status }}">
                                     {{ order.get_status_display }}
@@ -178,9 +517,10 @@
                         </tr>
                         {% empty %}
                         <tr>
-                            <td colspan="8" class="text-center py-4">
-                                <i class="fas fa-inbox fa-3x text-muted mb-3"></i>
-                                <p class="text-muted">No orders found</p>
+                            <td colspan="8" class="text-center py-5">
+                                <i class="fas fa-shopping-cart fa-3x text-muted mb-3"></i>
+                                <p class="text-muted mb-1">No orders found</p>
+                                <small class="text-muted">Orders will appear here once customers place them</small>
                             </td>
                         </tr>
                         {% endfor %}
@@ -290,11 +630,15 @@
             });
         });
 
-        // Order actions
         function viewOrder(orderId) {
             // Fetch order details and show in modal
-            fetch(`/api/orders/${orderId}/`)
-                .then(response => response.json())
+            fetch(`/admin/orders/${orderId}/detail/`)  // Fixed endpoint
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error(`HTTP error! status: ${response.status}`);
+                    }
+                    return response.json();
+                })
                 .then(data => {
                     displayOrderDetails(data);
                     const modal = new bootstrap.Modal(document.getElementById('orderModal'));
@@ -302,7 +646,7 @@
                 })
                 .catch(error => {
                     console.error('Error:', error);
-                    alert('Error loading order details');
+                    alert('Error loading order details: ' + error.message);
                 });
         }
 
@@ -330,13 +674,15 @@
                         <tr>
                             <td>${item.product_name}</td>
                             <td>${item.quantity}</td>
-                            <td>KES ${item.unit_price}</td>
-                            <td>KES ${(item.quantity * item.unit_price).toFixed(2)}</td>
+                            <td>KES ${parseFloat(item.unit_price).toLocaleString()}</td>
+                            <td>KES ${parseFloat(item.total_price).toLocaleString()}</td>
                         </tr>
                     `;
                 });
 
                 itemsHtml += '</tbody></table>';
+            } else {
+                itemsHtml = '<p class="text-muted">No items found for this order.</p>';
             }
 
             modalBody.innerHTML = `
@@ -349,7 +695,7 @@
                         </div>
                         <div class="order-detail-item">
                             <strong>Status:</strong>
-                            <span class="status-badge status-${order.status}">${order.status}</span>
+                            <span class="status-badge status-${order.status}">${order.status.charAt(0).toUpperCase() + order.status.slice(1)}</span>
                         </div>
                         <div class="order-detail-item">
                             <strong>Order Date:</strong>
@@ -361,7 +707,7 @@
                         </div>
                         <div class="order-detail-item">
                             <strong>Total Amount:</strong>
-                            <span><strong>KES ${order.total_amount}</strong></span>
+                            <span><strong>KES ${parseFloat(order.total_amount).toLocaleString()}</strong></span>
                         </div>
                     </div>
 
@@ -377,11 +723,11 @@
                         </div>
                         <div class="order-detail-item">
                             <strong>Phone:</strong>
-                            <span>${order.customer_phone}</span>
+                            <span>${order.customer_phone || 'Not provided'}</span>
                         </div>
                         <div class="order-detail-item">
                             <strong>Delivery:</strong>
-                            <span>${order.delivery_address ? 'Delivery' : 'Pickup'}</span>
+                            <span>${order.is_delivery ? 'Delivery' : 'Pickup'}</span>
                         </div>
                         ${order.delivery_address ? `
                         <div class="order-detail-item">
@@ -422,22 +768,52 @@
         }
 
         function updateOrderStatus(orderId, status) {
-            fetch(`/api/orders/${orderId}/`, {
+            // Get CSRF token properly
+            const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]')?.value ||
+                             document.querySelector('meta[name=csrf-token]')?.getAttribute('content') ||
+                             getCookie('csrftoken');
+
+            fetch(`/api/orders/${orderId}/status/`, {  // Fixed endpoint
                 method: 'PATCH',
                 headers: {
                     'Content-Type': 'application/json',
-                    'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]')?.value || '',
+                    'X-CSRFToken': csrfToken,
                 },
                 body: JSON.stringify({ status: status })
             })
-            .then(response => response.json())
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                return response.json();
+            })
             .then(data => {
-                location.reload(); // Reload to show updated status
+                if (data.success) {
+                    location.reload(); // Reload to show updated status
+                } else {
+                    alert(data.error || 'Error updating order status');
+                }
             })
             .catch(error => {
                 console.error('Error:', error);
-                alert('Error updating order status');
+                alert('Error updating order status: ' + error.message);
             });
+        }
+
+        // Helper function to get CSRF token from cookies
+        function getCookie(name) {
+            let cookieValue = null;
+            if (document.cookie && document.cookie !== '') {
+                const cookies = document.cookie.split(';');
+                for (let i = 0; i < cookies.length; i++) {
+                    const cookie = cookies[i].trim();
+                    if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                        cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                        break;
+                    }
+                }
+            }
+            return cookieValue;
         }
 
         function printOrder() {
